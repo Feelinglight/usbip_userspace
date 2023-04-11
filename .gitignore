@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0-only
 build/
 tmp*
+configure~
+config.h.in~
+.vscode/
 Makefile
 Makefile.in
 aclocal.m4

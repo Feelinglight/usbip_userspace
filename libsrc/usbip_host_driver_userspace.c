@@ -1,19 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/*
- * Copyright (C) 2011 matt mooney <mfm@muteddisk.com>
- *               2005-2007 Takahiro Hirofuchi
- * Copyright (C) 2015-2016 Samsung Electronics
- *               Igor Kotrasinski <i.kotrasinsk@samsung.com>
- *               Krzysztof Opasiak <k.opasiak@samsung.com>
- */
-
-#ifndef USBIP_HOST_DRIVER_USERSPACE
-
 #include <unistd.h>
 #include <libudev.h>
 
 #include "usbip_host_common.h"
 #include "usbip_host_driver.h"
+
+#ifdef USBIP_HOST_DRIVER_USERSPACE
 
 #undef  PROGNAME
 #define PROGNAME "libusbip"
