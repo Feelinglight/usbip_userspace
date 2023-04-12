@@ -7,5 +7,6 @@ autoreconf --install --force --verbose  "${PROJECT_DIR:-..}" 2>&1
 
 ../configure --enable-stub_userspace=yes 'CFLAGS=-g -O0'
 make
+cp config.h ..
 
 cd ..

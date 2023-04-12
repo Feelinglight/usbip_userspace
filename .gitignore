@@ -3,7 +3,8 @@ build/
 tmp*
 configure~
 config.h.in~
-.vscode/
+.vscode/*
+!.vscode/c_cpp_properties.json
 Makefile
 Makefile.in
 aclocal.m4
