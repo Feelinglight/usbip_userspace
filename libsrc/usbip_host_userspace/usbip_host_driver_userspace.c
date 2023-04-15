@@ -162,7 +162,29 @@ err_out:
 
 static int unbind_device_userspace(char *busid)
 {
-	return busid[0];
+	char path[BIND_MAX_PATH];
+	struct stat st;
+
+	if (usbip_host_driver_userspace_open(&host_driver))
+		goto err_out;
+
+	get_edev_path(path, busid);
+
+	if (stat(path, &st)) {
+		err("device is not bound");
+		goto err_close;
+	}
+
+	if (unlink(path)) {
+		err("del edev %s", path);
+		goto err_close;
+	}
+	usbip_host_driver_userspace_close(&host_driver);
+	return 0;
+err_close:
+	usbip_host_driver_userspace_close(&host_driver);
+err_out:
+	return -1;
 }
 
 struct usbip_host_driver host_driver = {
