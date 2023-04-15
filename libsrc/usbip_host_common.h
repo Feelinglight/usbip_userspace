@@ -33,6 +33,12 @@ struct usbip_host_driver_ops {
 	int (*read_interface)(struct usbip_usb_device *udev, int i,
 			      struct usbip_usb_interface *uinf);
 	int (*is_my_device)(struct udev_device *udev);
+	int (*bind_device)(char *busid);
+	int (*unbind_device)(char *busid);
+	int (*list_devices)(struct usbip_usb_device **udevs);
+	// int (*export_device)(struct usbip_exported_device *edev,
+			// struct usbip_sock *sock);
+	int (*read_device_status)(struct usbip_usb_device *dev);
 };
 
 struct usbip_host_driver {

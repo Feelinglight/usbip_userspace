@@ -154,5 +154,6 @@ struct usbip_host_driver device_driver = {
 		.get_device = usbip_generic_get_device,
 		.read_device = read_usb_vudc_device,
 		.is_my_device = is_my_device,
+		.read_device_status = NULL
 	},
 };

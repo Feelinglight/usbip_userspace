@@ -101,6 +101,8 @@ extern int usbip_use_debug ;
 		abort();				\
 	} while (0)
 
+#define __maybe_unused __attribute__((unused))
+
 struct usbip_usb_interface {
 	uint8_t bInterfaceClass;
 	uint8_t bInterfaceSubClass;
