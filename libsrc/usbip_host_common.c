@@ -26,6 +26,43 @@
 
 extern struct udev *udev_context;
 
+
+static int32_t read_device_status(struct usbip_usb_device *udev)
+{
+	char status_attr_path[SYSFS_PATH_MAX];
+	int size;
+	int fd;
+	int length;
+	char status[2] = { 0 };
+	int value = 0;
+
+	size = snprintf(status_attr_path, sizeof(status_attr_path),
+			"%s/usbip_status", udev->path);
+	if (size < 0 || (unsigned int)size >= sizeof(status_attr_path)) {
+		err("usbip_status path length %i >= %lu or < 0", size,
+		    (long unsigned)sizeof(status_attr_path));
+		return -1;
+	}
+
+
+	fd = open(status_attr_path, O_RDONLY);
+	if (fd < 0) {
+		err("error opening attribute %s", status_attr_path);
+		return -1;
+	}
+
+	length = read(fd, status, 1);
+	if (length < 0) {
+		err("error reading attribute %s", status_attr_path);
+		close(fd);
+		return -1;
+	}
+
+	value = atoi(status);
+	close(fd);
+	return value;
+}
+
 static
 struct usbip_exported_device *usbip_exported_device_new(
 		struct usbip_host_driver *hdriver, const char *sdevpath)
@@ -47,9 +84,7 @@ struct usbip_exported_device *usbip_exported_device_new(
 	if (hdriver->ops.read_device(edev->sudev, &edev->udev) < 0)
 		goto err;
 
-	assert(hdriver->ops.read_device_status);
-
-	edev->status = hdriver->ops.read_device_status(&edev->udev);
+	edev->status = read_device_status(&edev->udev);
 	if (edev->status < 0)
 		goto err;
 

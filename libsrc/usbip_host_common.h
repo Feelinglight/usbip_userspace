@@ -32,7 +32,6 @@ struct usbip_host_driver_ops {
 	int (*read_interface)(struct usbip_usb_device *udev, int i,
 			      struct usbip_usb_interface *uinf);
 	int (*is_my_device)(struct udev_device *udev);
-	int (*read_device_status)(struct usbip_usb_device *dev);
 	int (*bind_device)(char *busid);
 	int (*unbind_device)(char *busid);
 	int (*export_device)(struct usbip_exported_device *edev, int sockfd);
@@ -85,7 +84,7 @@ static inline int usbip_export_device(struct usbip_host_driver *hdriver,
 }
 
 static inline struct usbip_exported_device *
-usbip_get_device(struct usbip_host_driver *hdriver, int num)
+	usbip_get_device(struct usbip_host_driver *hdriver, int num)
 {
 	if (!hdriver->ops.get_device)
 		return NULL;

@@ -329,7 +329,7 @@ err_close_udev:
 	return ret;
 }
 
-int usbip_export_device_kernel(struct usbip_exported_device *edev, int sockfd)
+int export_device_kernel(struct usbip_exported_device *edev, int sockfd)
 {
 	char attr_name[] = "usbip_sockfd";
 	char sockfd_attr_path[SYSFS_PATH_MAX];
@@ -396,10 +396,9 @@ struct usbip_host_driver host_driver = {
 		.read_device = read_usb_device,
 		.read_interface = read_usb_interface,
 		.is_my_device = is_my_device,
-		.read_device_status = read_device_status_kernel,
 		.bind_device = bind_device_kernel,
 		.unbind_device = unbind_device_kernel,
-		.export_device = usbip_export_device_kernel,
+		.export_device = export_device_kernel,
 	},
 };
 
