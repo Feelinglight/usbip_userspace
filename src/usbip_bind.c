@@ -19,12 +19,6 @@
 #include "usbip.h"
 #include "sysfs_utils.h"
 
-enum unbind_status {
-	UNBIND_ST_OK,
-	UNBIND_ST_USBIP_HOST,
-	UNBIND_ST_FAILED
-};
-
 static const char usbip_bind_usage_string[] =
 	"usbip bind <args>\n"
 	"    -b, --busid=<busid>    Bind " USBIP_HOST_DRV_NAME ".ko to device "

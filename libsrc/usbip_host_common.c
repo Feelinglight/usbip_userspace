@@ -176,61 +176,6 @@ int usbip_generic_refresh_device_list(struct usbip_host_driver *hdriver)
 	return 0;
 }
 
-int usbip_export_device(struct usbip_exported_device *edev, int sockfd)
-{
-	char attr_name[] = "usbip_sockfd";
-	char sockfd_attr_path[SYSFS_PATH_MAX];
-	int size;
-	char sockfd_buff[30];
-	int ret;
-
-	if (edev->status != SDEV_ST_AVAILABLE) {
-		dbg("device not available: %s", edev->udev.busid);
-		switch (edev->status) {
-		case SDEV_ST_ERROR:
-			dbg("status SDEV_ST_ERROR");
-			ret = ST_DEV_ERR;
-			break;
-		case SDEV_ST_USED:
-			dbg("status SDEV_ST_USED");
-			ret = ST_DEV_BUSY;
-			break;
-		default:
-			dbg("status unknown: 0x%x", edev->status);
-			ret = -1;
-		}
-		return ret;
-	}
-
-	/* only the first interface is true */
-	size = snprintf(sockfd_attr_path, sizeof(sockfd_attr_path), "%s/%s",
-			edev->udev.path, attr_name);
-	if (size < 0 || (unsigned int)size >= sizeof(sockfd_attr_path)) {
-		err("exported device path length %i >= %lu or < 0", size,
-		    (long unsigned)sizeof(sockfd_attr_path));
-		return -1;
-	}
-
-	size = snprintf(sockfd_buff, sizeof(sockfd_buff), "%d\n", sockfd);
-	if (size < 0 || (unsigned int)size >= sizeof(sockfd_buff)) {
-		err("socket length %i >= %lu or < 0", size,
-		    (long unsigned)sizeof(sockfd_buff));
-		return -1;
-	}
-
-	ret = write_sysfs_attribute(sockfd_attr_path, sockfd_buff,
-				    strlen(sockfd_buff));
-	if (ret < 0) {
-		err("write_sysfs_attribute failed: sockfd %s to %s",
-		    sockfd_buff, sockfd_attr_path);
-		return ret;
-	}
-
-	info("connect: %s", edev->udev.busid);
-
-	return ret;
-}
-
 struct usbip_exported_device *usbip_generic_get_device(
 		struct usbip_host_driver *hdriver, int num)
 {

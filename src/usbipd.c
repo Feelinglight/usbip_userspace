@@ -121,7 +121,7 @@ static int recv_request_import(int sockfd)
 		usbip_net_set_nodelay(sockfd);
 
 		/* export device needs a TCP/IP socket descriptor */
-		status = usbip_export_device(edev, sockfd);
+		status = usbip_export_device(driver, edev, sockfd);
 		if (status < 0)
 			status = ST_NA;
 	} else {
