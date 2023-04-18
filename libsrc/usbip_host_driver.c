@@ -386,12 +386,11 @@ int export_device_kernel(struct usbip_exported_device *edev, int sockfd)
 
 
 struct usbip_host_driver host_driver = {
-	.edev_list = LIST_HEAD_INIT(host_driver.edev_list),
 	.udev_subsystem = "usb",
 	.ops = {
 		.open = usbip_host_driver_open,
 		.close = usbip_generic_driver_close,
-		.refresh_device_list = usbip_generic_refresh_device_list,
+		.get_device_list = usbip_generic_refresh_device_list,
 		.get_device = usbip_generic_get_device,
 		.read_device = read_usb_device,
 		.read_interface = read_usb_interface,

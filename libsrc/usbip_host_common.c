@@ -117,7 +117,8 @@ err:
 	return NULL;
 }
 
-static int refresh_exported_devices(struct usbip_host_driver *hdriver)
+static int refresh_exported_devices(struct usbip_host_driver *hdriver,
+	struct usbip_exported_devices *edevs)
 {
 	struct usbip_exported_device *edev;
 	struct udev_enumerate *enumerate;
@@ -146,43 +147,23 @@ static int refresh_exported_devices(struct usbip_host_driver *hdriver)
 				continue;
 			}
 
-			list_add(&edev->node, &hdriver->edev_list);
-			hdriver->ndevs++;
+			list_add(&edev->node, &edevs->edev_list);
+			edevs->ndevs++;
 		}
 	}
 
 	return 0;
 }
 
-static void usbip_exported_device_destroy(struct list_head *devs)
+int usbip_generic_driver_open(__maybe_unused struct usbip_host_driver *hdriver)
 {
-	struct list_head *i, *tmp;
-	struct usbip_exported_device *edev;
-
-	list_for_each_safe(i, tmp, devs) {
-		edev = list_entry(i, struct usbip_exported_device, node);
-		list_del(i);
-		free(edev);
-	}
-}
-
-int usbip_generic_driver_open(struct usbip_host_driver *hdriver)
-{
-	int rc;
-
 	udev_context = udev_new();
 	if (!udev_context) {
 		err("udev_new failed");
 		return -1;
 	}
 
-	rc = refresh_exported_devices(hdriver);
-	if (rc < 0)
-		goto err;
 	return 0;
-err:
-	udev_unref(udev_context);
-	return -1;
 }
 
 void usbip_generic_driver_close(struct usbip_host_driver *hdriver)
@@ -190,21 +171,19 @@ void usbip_generic_driver_close(struct usbip_host_driver *hdriver)
 	if (!hdriver)
 		return;
 
-	usbip_exported_device_destroy(&hdriver->edev_list);
-
 	udev_unref(udev_context);
 }
 
-int usbip_generic_refresh_device_list(struct usbip_host_driver *hdriver)
+int usbip_generic_refresh_device_list(struct usbip_host_driver *hdriver,
+	struct usbip_exported_devices *edevs)
 {
 	int rc;
 
-	usbip_exported_device_destroy(&hdriver->edev_list);
+	edevs->ndevs = 0;
+	INIT_LIST_HEAD(&edevs->edev_list);
 
-	hdriver->ndevs = 0;
-	INIT_LIST_HEAD(&hdriver->edev_list);
+	rc = refresh_exported_devices(hdriver, edevs);
 
-	rc = refresh_exported_devices(hdriver);
 	if (rc < 0)
 		return -1;
 
@@ -212,17 +191,15 @@ int usbip_generic_refresh_device_list(struct usbip_host_driver *hdriver)
 }
 
 struct usbip_exported_device *usbip_generic_get_device(
-		struct usbip_host_driver *hdriver, int num)
+		struct usbip_exported_devices *edevs, const char *busid)
 {
 	struct list_head *i;
 	struct usbip_exported_device *edev;
-	int cnt = 0;
 
-	list_for_each(i, &hdriver->edev_list) {
+	list_for_each(i, &edevs->edev_list) {
 		edev = list_entry(i, struct usbip_exported_device, node);
-		if (num == cnt)
+		if (!strncmp(busid, edev->udev.busid, SYSFS_BUS_ID_SIZE))
 			return edev;
-		cnt++;
 	}
 
 	return NULL;

@@ -91,29 +91,32 @@ static void usbipd_help(void)
 static int recv_request_import(int sockfd)
 {
 	struct op_import_request req;
+	struct usbip_exported_devices edevs;
 	struct usbip_exported_device *edev;
 	struct usbip_usb_device pdu_udev;
-	struct list_head *i;
 	int found = 0;
 	int status = ST_OK;
 	int rc;
 
 	memset(&req, 0, sizeof(req));
 
+	rc = usbip_refresh_device_list(driver, &edevs);
+	if (rc < 0) {
+		dbg("could not refresh device list: %d", rc);
+		return -1;
+	}
+
 	rc = usbip_net_recv(sockfd, &req, sizeof(req));
 	if (rc < 0) {
 		dbg("usbip_net_recv failed: import request");
-		return -1;
+		goto err_free_edevs;
 	}
 	PACK_OP_IMPORT_REQUEST(0, &req);
 
-	list_for_each(i, &driver->edev_list) {
-		edev = list_entry(i, struct usbip_exported_device, node);
-		if (!strncmp(req.busid, edev->udev.busid, SYSFS_BUS_ID_SIZE)) {
-			info("found requested device: %s", req.busid);
-			found = 1;
-			break;
-		}
+	edev = usbip_get_device(driver, &edevs, req.busid);
+	if (edev) {
+		info("found requested device: %s", req.busid);
+		found = 1;
 	}
 
 	if (found) {
@@ -132,12 +135,12 @@ static int recv_request_import(int sockfd)
 	rc = usbip_net_send_op_common(sockfd, OP_REP_IMPORT, status);
 	if (rc < 0) {
 		dbg("usbip_net_send_op_common failed: %#0x", OP_REP_IMPORT);
-		return -1;
+		goto err_free_edevs;
 	}
 
 	if (status) {
 		dbg("import request busid %s: failed", req.busid);
-		return -1;
+		goto err_free_edevs;
 	}
 
 	memcpy(&pdu_udev, &edev->udev, sizeof(pdu_udev));
@@ -146,15 +149,21 @@ static int recv_request_import(int sockfd)
 	rc = usbip_net_send(sockfd, &pdu_udev, sizeof(pdu_udev));
 	if (rc < 0) {
 		dbg("usbip_net_send failed: devinfo");
-		return -1;
+		goto err_free_edevs;
 	}
 
 	dbg("import request busid %s: complete", req.busid);
 
+	usbip_free_device_list(driver, &edevs);
+
 	return 0;
+
+err_free_edevs:
+	usbip_free_device_list(driver, &edevs);
+	return -1;
 }
 
-static int send_reply_devlist(int connfd)
+static int send_reply_devlist(int connfd, struct usbip_exported_devices *edevs)
 {
 	struct usbip_exported_device *edev;
 	struct usbip_usb_device pdu_udev;
@@ -172,13 +181,7 @@ static int send_reply_devlist(int connfd)
 	 *	  another client.
 	 */
 
-	reply.ndev = 0;
-	/* number of exported devices */
-	list_for_each(j, &driver->edev_list) {
-		edev = list_entry(j, struct usbip_exported_device, node);
-		if (edev->status != SDEV_ST_USED)
-			reply.ndev += 1;
-	}
+	reply.ndev = edevs->ndevs;
 	info("exportable devices: %d", reply.ndev);
 
 	rc = usbip_net_send_op_common(connfd, OP_REP_DEVLIST, ST_OK);
@@ -194,11 +197,8 @@ static int send_reply_devlist(int connfd)
 		return -1;
 	}
 
-	list_for_each(j, &driver->edev_list) {
+	list_for_each(j, &edevs->edev_list) {
 		edev = list_entry(j, struct usbip_exported_device, node);
-		if (edev->status == SDEV_ST_USED)
-			continue;
-
 		dump_usb_device(&edev->udev);
 		memcpy(&pdu_udev, &edev->udev, sizeof(pdu_udev));
 		usbip_net_pack_usb_device(1, &pdu_udev);
@@ -214,8 +214,7 @@ static int send_reply_devlist(int connfd)
 			memcpy(&pdu_uinf, &edev->uinf[i], sizeof(pdu_uinf));
 			usbip_net_pack_usb_interface(1, &pdu_uinf);
 
-			rc = usbip_net_send(connfd, &pdu_uinf,
-					sizeof(pdu_uinf));
+			rc = usbip_net_send(connfd, &pdu_uinf, sizeof(pdu_uinf));
 			if (rc < 0) {
 				err("usbip_net_send failed: pdu_uinf");
 				return -1;
@@ -228,24 +227,36 @@ static int send_reply_devlist(int connfd)
 
 static int recv_request_devlist(int connfd)
 {
+	struct usbip_exported_devices edevs;
 	struct op_devlist_request req;
 	int rc;
+
+	rc = usbip_refresh_device_list(driver, &edevs);
+	if (rc < 0) {
+		dbg("could not refresh device list: %d", rc);
+		return -1;
+	}
 
 	memset(&req, 0, sizeof(req));
 
 	rc = usbip_net_recv(connfd, &req, sizeof(req));
 	if (rc < 0) {
 		dbg("usbip_net_recv failed: devlist request");
-		return -1;
+		goto err_free_edevs;
 	}
 
-	rc = send_reply_devlist(connfd);
+	rc = send_reply_devlist(connfd, &edevs);
 	if (rc < 0) {
 		dbg("send_reply_devlist failed");
-		return -1;
+		goto err_free_edevs;
 	}
 
+	usbip_free_device_list(driver, &edevs);
+
 	return 0;
+err_free_edevs:
+	usbip_free_device_list(driver, &edevs);
+	return -1;
 }
 
 static int recv_pdu(int connfd)
@@ -257,12 +268,6 @@ static int recv_pdu(int connfd)
 	ret = usbip_net_recv_op_common(connfd, &code, &status);
 	if (ret < 0) {
 		dbg("could not receive opcode: %#0x", code);
-		return -1;
-	}
-
-	ret = usbip_refresh_device_list(driver);
-	if (ret < 0) {
-		dbg("could not refresh device list: %d", ret);
 		return -1;
 	}
 
@@ -572,7 +577,7 @@ static int do_standalone_mode(int daemonize, int ipv4, int ipv6)
 				}
 			}
 		} else {
-			dbg("heartbeat timeout on ppoll()");
+			// dbg("heartbeat timeout on ppoll()");
 		}
 	}
 

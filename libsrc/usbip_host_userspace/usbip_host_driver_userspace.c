@@ -19,7 +19,6 @@
 #define BIND_MAX_PATH (SYSFS_BUS_ID_SIZE + 256)
 
 static libusb_context *libusb_ctx;
-static libusb_device **libusb_devs;
 
 
 static void get_device_busid(libusb_device *dev, char *buf)
@@ -136,21 +135,6 @@ static void exported_device_delete(struct usbip_exported_device *edev)
 	if (edev_data->sdev)
 		stub_device_delete(edev_data->sdev);
 	free(edev);
-}
-
-static void exported_devices_destroy(struct list_head *devs)
-{
-	struct list_head *i, *tmp;
-	struct usbip_exported_device *edev;
-
-	if (devs)
-		libusb_free_device_list(libusb_devs, 1);
-
-	list_for_each_safe(i, tmp, devs) {
-		edev = list_entry(i, struct usbip_exported_device, node);
-		list_del(i);
-		exported_device_delete(edev);
-	}
 }
 
 static void read_usb_device_userspace(struct usbip_usb_device *udev,
@@ -280,28 +264,27 @@ err_out:
 	return NULL;
 }
 
-static int refresh_device_list_userspace(struct usbip_host_driver *hdriver)
+static int get_device_list_userspace(__maybe_unused struct usbip_host_driver *hdriver,
+	struct usbip_exported_devices *edevs)
 {
 	int num, i;
-	libusb_device *dev;
+	libusb_device **devs, *dev;
 	struct usbip_exported_device *edev;
 	struct libusb_device_descriptor desc;
 	char busid[SYSFS_BUS_ID_SIZE];
 
-	exported_devices_destroy(&hdriver->edev_list);
+	edevs->ndevs = 0;
+	INIT_LIST_HEAD(&edevs->edev_list);
+	edevs->data = NULL;
 
-	hdriver->ndevs = 0;
-	INIT_LIST_HEAD(&hdriver->edev_list);
-	libusb_devs = NULL;
-
-	num = libusb_get_device_list(libusb_ctx, &libusb_devs);
+	num = libusb_get_device_list(libusb_ctx, &devs);
 	if (num < 0) {
 		err("libusb_get_device_list error");
 		goto err_out;
 	}
 
 	for (i = 0; i < num; i++) {
-		dev = *(libusb_devs + i);
+		dev = *(devs + i);
 		get_device_busid(dev, busid);
 		if (find_exported_device(busid)) {
 			if (libusb_get_device_descriptor(dev, &desc)) {
@@ -320,16 +303,33 @@ static int refresh_device_list_userspace(struct usbip_host_driver *hdriver)
 				goto err_out;
 			}
 
-			list_add(&edev->node, &hdriver->edev_list);
-			hdriver->ndevs++;
+			list_add(&edev->node, &edevs->edev_list);
+			edevs->ndevs++;
 		}
 	}
+	edevs->data = (void *)devs;
 	return 0;
 
 err_free_list:
-	libusb_free_device_list(libusb_devs, 1);
+	libusb_free_device_list(devs, 1);
 err_out:
 	return -1;
+}
+
+static void exported_devices_destroy(struct usbip_exported_devices *edevs)
+{
+	libusb_device **devs = (libusb_device **)edevs->data;
+	struct list_head *i, *tmp;
+	struct usbip_exported_device *edev;
+
+	if (devs)
+		libusb_free_device_list(devs, 1);
+
+	list_for_each_safe(i, tmp, &edevs->edev_list) {
+		edev = list_entry(i, struct usbip_exported_device, node);
+		list_del(i);
+		exported_device_delete(edev);
+	}
 }
 
 static int bind_device_userspace(char *busid)
@@ -395,6 +395,9 @@ static int unbind_device_userspace(char *busid)
 		goto err_close;
 	}
 	usbip_host_driver_userspace_close(&host_driver);
+
+	info("unbind device on busid %s: complete", busid);
+
 	return 0;
 err_close:
 	usbip_host_driver_userspace_close(&host_driver);
@@ -405,67 +408,67 @@ err_out:
 int export_device_userspace(__maybe_unused struct usbip_exported_device *edev,
 	__maybe_unused int sockfd)
 {
-	char attr_name[] = "usbip_sockfd";
-	char sockfd_attr_path[SYSFS_PATH_MAX];
-	int size;
-	char sockfd_buff[30];
-	int ret;
+	// char attr_name[] = "usbip_sockfd";
+	// char sockfd_attr_path[SYSFS_PATH_MAX];
+	// int size;
+	// char sockfd_buff[30];
+	// int ret;
 
-	if (edev->status != SDEV_ST_AVAILABLE) {
-		dbg("device not available: %s", edev->udev.busid);
-		switch (edev->status) {
-		case SDEV_ST_ERROR:
-			dbg("status SDEV_ST_ERROR");
-			ret = ST_DEV_ERR;
-			break;
-		case SDEV_ST_USED:
-			dbg("status SDEV_ST_USED");
-			ret = ST_DEV_BUSY;
-			break;
-		default:
-			dbg("status unknown: 0x%x", edev->status);
-			ret = -1;
-		}
-		return ret;
-	}
+	// if (edev->status != SDEV_ST_AVAILABLE) {
+	// 	dbg("device not available: %s", edev->udev.busid);
+	// 	switch (edev->status) {
+	// 	case SDEV_ST_ERROR:
+	// 		dbg("status SDEV_ST_ERROR");
+	// 		ret = ST_DEV_ERR;
+	// 		break;
+	// 	case SDEV_ST_USED:
+	// 		dbg("status SDEV_ST_USED");
+	// 		ret = ST_DEV_BUSY;
+	// 		break;
+	// 	default:
+	// 		dbg("status unknown: 0x%x", edev->status);
+	// 		ret = -1;
+	// 	}
+	// 	return ret;
+	// }
 
-	/* only the first interface is true */
-	size = snprintf(sockfd_attr_path, sizeof(sockfd_attr_path), "%s/%s",
-			edev->udev.path, attr_name);
-	if (size < 0 || (unsigned int)size >= sizeof(sockfd_attr_path)) {
-		err("exported device path length %i >= %lu or < 0", size,
-		    (long unsigned)sizeof(sockfd_attr_path));
-		return -1;
-	}
+	// /* only the first interface is true */
+	// size = snprintf(sockfd_attr_path, sizeof(sockfd_attr_path), "%s/%s",
+	// 		edev->udev.path, attr_name);
+	// if (size < 0 || (unsigned int)size >= sizeof(sockfd_attr_path)) {
+	// 	err("exported device path length %i >= %lu or < 0", size,
+	// 	    (long unsigned)sizeof(sockfd_attr_path));
+	// 	return -1;
+	// }
 
-	size = snprintf(sockfd_buff, sizeof(sockfd_buff), "%d\n", sockfd);
-	if (size < 0 || (unsigned int)size >= sizeof(sockfd_buff)) {
-		err("socket length %i >= %lu or < 0", size,
-		    (long unsigned)sizeof(sockfd_buff));
-		return -1;
-	}
+	// size = snprintf(sockfd_buff, sizeof(sockfd_buff), "%d\n", sockfd);
+	// if (size < 0 || (unsigned int)size >= sizeof(sockfd_buff)) {
+	// 	err("socket length %i >= %lu or < 0", size,
+	// 	    (long unsigned)sizeof(sockfd_buff));
+	// 	return -1;
+	// }
 
-	ret = write_sysfs_attribute(sockfd_attr_path, sockfd_buff,
-				    strlen(sockfd_buff));
-	if (ret < 0) {
-		err("write_sysfs_attribute failed: sockfd %s to %s",
-		    sockfd_buff, sockfd_attr_path);
-		return ret;
-	}
+	// ret = write_sysfs_attribute(sockfd_attr_path, sockfd_buff,
+	// 			    strlen(sockfd_buff));
+	// if (ret < 0) {
+	// 	err("write_sysfs_attribute failed: sockfd %s to %s",
+	// 	    sockfd_buff, sockfd_attr_path);
+	// 	return ret;
+	// }
 
-	info("connect: %s", edev->udev.busid);
+	// info("connect: %s", edev->udev.busid);
 
-	return ret;
+	// return ret;
 	return 0;
 }
 
 struct usbip_host_driver host_driver = {
-	.edev_list = LIST_HEAD_INIT(host_driver.edev_list),
 	.udev_subsystem = "usb",
 	.ops = {
 		.open = usbip_host_driver_userspace_open,
 		.close = usbip_host_driver_userspace_close,
-		.refresh_device_list = refresh_device_list_userspace,
+		.get_device_list = get_device_list_userspace,
+		.free_device_list = exported_devices_destroy,
 		.get_device = usbip_generic_get_device,
 		.read_device = NULL,
 		.read_interface = NULL,
