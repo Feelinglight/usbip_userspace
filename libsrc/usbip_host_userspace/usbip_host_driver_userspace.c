@@ -121,13 +121,6 @@ int find_device(const char *target_busid)
 	return ret;
 }
 
-static inline
-struct stub_edev_data *edev_to_stub_edev_data(struct usbip_exported_device *edev)
-{
-	return (struct stub_edev_data *)(edev->uinf + edev->udev.bNumInterfaces);
-}
-
-
 static void exported_device_delete(struct usbip_exported_device *edev)
 {
 	struct stub_edev_data *edev_data = edev_to_stub_edev_data(edev);
@@ -252,6 +245,7 @@ static struct usbip_exported_device *exported_device_new(
 
 	edev_data = edev_to_stub_edev_data(edev);
 	edev_data->dev = dev;
+	edev_data->sdev = NULL;
 	edev_data->num_eps = num_eps;
 	read_endpoints(edev_data->eps, config);
 
@@ -405,62 +399,74 @@ err_out:
 	return -1;
 }
 
-int export_device_userspace(__maybe_unused struct usbip_exported_device *edev,
-	__maybe_unused int sockfd)
+int export_device_userspace(struct usbip_exported_device *edev, int sockfd)
 {
-	// char attr_name[] = "usbip_sockfd";
-	// char sockfd_attr_path[SYSFS_PATH_MAX];
-	// int size;
-	// char sockfd_buff[30];
-	// int ret;
+	// Проверить, что устройство уже не используется
+	// Записать номер сокета в sysfs -> sockfd
 
-	// if (edev->status != SDEV_ST_AVAILABLE) {
-	// 	dbg("device not available: %s", edev->udev.busid);
-	// 	switch (edev->status) {
-	// 	case SDEV_ST_ERROR:
-	// 		dbg("status SDEV_ST_ERROR");
-	// 		ret = ST_DEV_ERR;
-	// 		break;
-	// 	case SDEV_ST_USED:
-	// 		dbg("status SDEV_ST_USED");
-	// 		ret = ST_DEV_BUSY;
-	// 		break;
-	// 	default:
-	// 		dbg("status unknown: 0x%x", edev->status);
-	// 		ret = -1;
-	// 	}
-	// 	return ret;
-	// }
+	struct stub_device *sdev;
+	struct stub_edev_data *edev_data = edev_to_stub_edev_data(edev);
+	int ret;
 
-	// /* only the first interface is true */
-	// size = snprintf(sockfd_attr_path, sizeof(sockfd_attr_path), "%s/%s",
-	// 		edev->udev.path, attr_name);
-	// if (size < 0 || (unsigned int)size >= sizeof(sockfd_attr_path)) {
-	// 	err("exported device path length %i >= %lu or < 0", size,
-	// 	    (long unsigned)sizeof(sockfd_attr_path));
-	// 	return -1;
-	// }
+	sdev = stub_device_new(edev);
+	if (!sdev)
+		goto err_out;
 
-	// size = snprintf(sockfd_buff, sizeof(sockfd_buff), "%d\n", sockfd);
-	// if (size < 0 || (unsigned int)size >= sizeof(sockfd_buff)) {
-	// 	err("socket length %i >= %lu or < 0", size,
-	// 	    (long unsigned)sizeof(sockfd_buff));
-	// 	return -1;
-	// }
+	edev_data->sdev = sdev;
 
-	// ret = write_sysfs_attribute(sockfd_attr_path, sockfd_buff,
-	// 			    strlen(sockfd_buff));
-	// if (ret < 0) {
-	// 	err("write_sysfs_attribute failed: sockfd %s to %s",
-	// 	    sockfd_buff, sockfd_attr_path);
-	// 	return ret;
-	// }
+	ret = libusb_open(sdev->dev, &sdev->dev_handle);
+	if (ret) {
+		if (ret == LIBUSB_ERROR_ACCESS)
+			err("access denied to open device %s",
+					edev->udev.busid);
+		else
+			err("failed to open device %s by %d",
+					edev->udev.busid, ret);
 
-	// info("connect: %s", edev->udev.busid);
+		goto err_out;
+	}
 
-	// return ret;
+	if (claim_interfaces(sdev->dev_handle, sdev->udev.bNumInterfaces,
+			     sdev->ifs)) {
+		err("claim interfaces %s", edev->udev.busid);
+		goto err_close_lib;
+	}
+
+	sdev->ud.sockfd = sockfd;
+
+	return 0;
+
+err_close_lib:
+	libusb_close(sdev->dev_handle);
+	sdev->dev_handle = NULL;
+err_out:
+	return -1;
+}
+
+void stub_unexport_device(struct stub_device *sdev)
+{
+	release_interfaces(sdev->dev_handle, sdev->udev.bNumInterfaces,
+			   sdev->ifs, 0);
+	libusb_close(sdev->dev_handle);
+	sdev->dev_handle = NULL;
+}
+
+static int run_redirect_userspace(struct usbip_exported_device *edev)
+{
+	struct stub_device *sdev = edev_to_stub_edev_data(edev)->sdev;
+
+	if (stub_start(sdev)) {
+		err("start stub");
+		return -1;
+	}
+	stub_join(sdev);
+	stub_device_cleanup_transfers(sdev);
+	stub_device_cleanup_unlinks(sdev);
+	stub_unexport_device(sdev);
+
 	return 0;
 }
+
 
 struct usbip_host_driver host_driver = {
 	.udev_subsystem = "usb",
@@ -475,7 +481,8 @@ struct usbip_host_driver host_driver = {
 		.is_my_device = NULL,
 		.bind_device = bind_device_userspace,
 		.unbind_device = unbind_device_userspace,
-		.export_device = export_device_userspace
+		.export_device = export_device_userspace,
+		.run_redirect = run_redirect_userspace,
 	},
 };
 

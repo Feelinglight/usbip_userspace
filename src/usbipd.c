@@ -154,6 +154,12 @@ static int recv_request_import(int sockfd)
 
 	dbg("import request busid %s: complete", req.busid);
 
+	rc = usbip_run_redirect(driver, edev);
+	if (rc < 0) {
+		err("run redirect");
+		goto err_free_edevs;
+	}
+
 	usbip_free_device_list(driver, &edevs);
 
 	return 0;

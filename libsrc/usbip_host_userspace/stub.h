@@ -70,7 +70,29 @@ struct stub_edev_data {
 	struct stub_endpoint eps[];
 };
 
+static inline
+struct stub_edev_data *edev_to_stub_edev_data(struct usbip_exported_device *edev)
+{
+	return (struct stub_edev_data *)(edev->uinf + edev->udev.bNumInterfaces);
+}
+
+struct stub_device *stub_device_new(struct usbip_exported_device *edev);
 void stub_device_delete(struct stub_device *sdev);
 
+void release_interface(libusb_device_handle *dev_handle,
+	struct stub_interface *intf, int force);
+void release_interfaces(libusb_device_handle *dev_handle, int num_ifs,
+	struct stub_interface *intfs, int force);
+
+int claim_interface(libusb_device_handle *dev_handle,
+	struct stub_interface *intf);
+int claim_interfaces(libusb_device_handle *dev_handle, int num_ifs,
+	struct stub_interface *intfs);
+
+int stub_start(struct stub_device *sdev);
+void stub_join(struct stub_device *sdev);
+
+void stub_device_cleanup_transfers(struct stub_device *sdev);
+void stub_device_cleanup_unlinks(struct stub_device *sdev);
 
 #endif // __STUB_H

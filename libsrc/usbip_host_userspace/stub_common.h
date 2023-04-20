@@ -1,8 +1,5 @@
-#include <stdio.h>
-#include <stddef.h>
-#include <libusb-1.0/libusb.h>
-
 #include "usbip_common.h"
+#include "stub_logging.h"
 
 
 /* a common structure for stub_device and vhci_device */
@@ -12,7 +9,7 @@ struct usbip_device {
 	/* lock for status */
 	pthread_mutex_t lock;
 
-	struct usbip_sock *sock;
+	int sockfd;
 
 	unsigned long event;
 	pthread_t eh;

@@ -38,6 +38,7 @@ struct usbip_host_driver_ops {
 	int (*bind_device)(char *busid);
 	int (*unbind_device)(char *busid);
 	int (*export_device)(struct usbip_exported_device *edev, int sockfd);
+	int (*run_redirect)(struct usbip_exported_device *edev);
 };
 
 struct usbip_exported_devices {
@@ -107,6 +108,14 @@ static inline struct usbip_exported_device *usbip_get_device(
 	if (!hdriver->ops.get_device)
 		return NULL;
 	return hdriver->ops.get_device(edevs, busid);
+}
+
+static inline int usbip_run_redirect(struct usbip_host_driver *hdriver,
+	struct usbip_exported_device *edev)
+{
+	if (!hdriver->ops.run_redirect)
+		return -EOPNOTSUPP;
+	return hdriver->ops.run_redirect(edev);
 }
 
 /* Helper functions for implementing driver backend */
