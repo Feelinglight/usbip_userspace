@@ -6,7 +6,7 @@ static void stub_shutdown(struct usbip_device *ud)
 	struct stub_device *sdev = container_of(ud, struct stub_device, ud);
 
 	sdev->should_stop = 1;
-	// usbip_stop_eh(&sdev->ud);
+	usbip_stop_eh(&sdev->ud);
 	pthread_mutex_unlock(&sdev->tx_waitq);
 	/* rx will exit by disconnect */
 }
@@ -185,10 +185,10 @@ int stub_start(struct stub_device *sdev)
 	if (sdev == NULL)
 		return 0;
 
-	// if (usbip_start_eh(&sdev->ud)) {
-	// 	err("start event handler");
-	// 	return -1;
-	// }
+	if (usbip_start_eh(&sdev->ud)) {
+		err("start event handler");
+		return -1;
+	}
 	// if (pthread_create(&sdev->rx, NULL, stub_rx_loop, sdev)) {
 	// 	err("start recv thread");
 	// 	return -1;
@@ -197,10 +197,10 @@ int stub_start(struct stub_device *sdev)
 	// 	err("start send thread");
 	// 	return -1;
 	// }
-	// pthread_mutex_lock(&sdev->ud.lock);
-	// sdev->ud.status = SDEV_ST_USED;
-	// pthread_mutex_unlock(&sdev->ud.lock);
-	// dbg("successfully started libusb transmission");
+	pthread_mutex_lock(&sdev->ud.lock);
+	sdev->ud.status = SDEV_ST_USED;
+	pthread_mutex_unlock(&sdev->ud.lock);
+	dbg("successfully started libusb transmission");
 	return 0;
 }
 
@@ -250,8 +250,8 @@ void stub_join(struct stub_device *sdev)
 {
 	if (sdev == NULL)
 		return;
-	// dbg("waiting on libusb transmission threads");
-	// usbip_join_eh(&sdev->ud);
+	dbg("waiting on libusb transmission threads");
+	usbip_join_eh(&sdev->ud);
 	// pthread_join(sdev->tx, NULL);
 	// pthread_join(sdev->rx, NULL);
 }

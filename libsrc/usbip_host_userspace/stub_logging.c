@@ -14,7 +14,7 @@
 #ifdef CONFIG_USBIP_DEBUG
 unsigned long usbip_debug_flag = 0xffffffff;
 #else
-unsigned long usbip_debug_flag;
+unsigned long usbip_debug_flag = 0xffffffff;
 #endif
 
 int usbip_dev_printf(FILE *s, const char *level, struct libusb_device *dev)
