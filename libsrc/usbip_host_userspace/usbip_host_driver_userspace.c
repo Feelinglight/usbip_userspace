@@ -190,6 +190,7 @@ static void read_endpoints(struct stub_endpoint *ep,
 			idesc = intf->altsetting + j;
 			for (k = 0; k < idesc->bNumEndpoints; k++) {
 				read_endpoint(ep + num, idesc->endpoint + k);
+				num += 1;
 			}
 		}
 	}
