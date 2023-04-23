@@ -218,6 +218,13 @@ int trxstat2error(enum libusb_transfer_status trxstat);
 enum libusb_transfer_status error2trxstat(int e);
 void usbip_header_correct_endian(struct usbip_header *pdu, int send);
 
+
+void usbip_iso_packet_correct_endian(
+		struct usbip_iso_packet_descriptor *iso, int send);
+void usbip_pack_iso(struct usbip_iso_packet_descriptor *iso,
+			   struct libusb_iso_packet_descriptor *uiso,
+			   int offset, int pack);
+
 struct usbip_iso_packet_descriptor*
 usbip_alloc_iso_desc_pdu(struct libusb_transfer *trx, ssize_t *bufflen);
 

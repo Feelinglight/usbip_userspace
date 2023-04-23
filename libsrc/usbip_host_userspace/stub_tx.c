@@ -101,17 +101,17 @@ static inline void setup_base_pdu(struct usbip_header_basic *base,
 	base->direction = 0;
 }
 
-// void usbip_pack_ret_submit(struct usbip_header *pdu,
-// 			   struct libusb_transfer *trx)
-// {
-// 	struct usbip_header_ret_submit *rpdu = &pdu->u.ret_submit;
+void usbip_pack_ret_submit(struct usbip_header *pdu,
+			   struct libusb_transfer *trx)
+{
+	struct usbip_header_ret_submit *rpdu = &pdu->u.ret_submit;
 
-// 	rpdu->status		= trxstat2error(trx->status);
-// 	rpdu->actual_length	= trx->actual_length;
-// 	rpdu->start_frame	= 0;
-// 	rpdu->number_of_packets = trx->num_iso_packets;
-// 	rpdu->error_count	= 0;
-// }
+	rpdu->status		= trxstat2error(trx->status);
+	rpdu->actual_length	= trx->actual_length;
+	rpdu->start_frame	= 0;
+	rpdu->number_of_packets = trx->num_iso_packets;
+	rpdu->error_count	= 0;
+}
 
 void usbip_pack_ret_unlink(struct usbip_header *pdu,
 			   struct stub_unlink *unlink)
@@ -121,20 +121,211 @@ void usbip_pack_ret_unlink(struct usbip_header *pdu,
 	rpdu->status = trxstat2error(unlink->status);
 }
 
-// static void setup_ret_submit_pdu(struct usbip_header *rpdu,
-// 				 struct libusb_transfer *trx)
-// {
-// 	struct stub_priv *priv = (struct stub_priv *) trx->user_data;
+static void setup_ret_submit_pdu(struct usbip_header *rpdu,
+				 struct libusb_transfer *trx)
+{
+	struct stub_priv *priv = (struct stub_priv *) trx->user_data;
 
-// 	setup_base_pdu(&rpdu->base, USBIP_RET_SUBMIT, priv->seqnum);
-// 	usbip_pack_ret_submit(rpdu, trx);
-// }
+	setup_base_pdu(&rpdu->base, USBIP_RET_SUBMIT, priv->seqnum);
+	usbip_pack_ret_submit(rpdu, trx);
+}
 
 static void setup_ret_unlink_pdu(struct usbip_header *rpdu,
 				 struct stub_unlink *unlink)
 {
 	setup_base_pdu(&rpdu->base, USBIP_RET_UNLINK, unlink->seqnum);
 	usbip_pack_ret_unlink(rpdu, unlink);
+}
+
+static struct stub_priv *dequeue_from_priv_tx(struct stub_device *sdev)
+{
+	struct list_head *pos, *tmp;
+	struct stub_priv *priv;
+
+	pthread_mutex_lock(&sdev->priv_lock);
+
+	list_for_each_safe(pos, tmp, &sdev->priv_tx) {
+		priv = list_entry(pos, struct stub_priv, list);
+		list_del(&priv->list);
+		list_add(&priv->list, sdev->priv_free.prev);
+		pthread_mutex_unlock(&sdev->priv_lock);
+		return priv;
+	}
+
+	pthread_mutex_unlock(&sdev->priv_lock);
+
+	return NULL;
+}
+
+static void fixup_actual_length(struct libusb_transfer *trx)
+{
+	int i, len = 0;
+
+	for (i = 0; i < trx->num_iso_packets; i++)
+		len += trx->iso_packet_desc[i].actual_length;
+
+	trx->actual_length = len;
+}
+
+/* must free buffer */
+struct usbip_iso_packet_descriptor*
+usbip_alloc_iso_desc_pdu(struct libusb_transfer *trx, ssize_t *bufflen)
+{
+	struct usbip_iso_packet_descriptor *iso;
+	int np = trx->num_iso_packets;
+	ssize_t size = np * sizeof(*iso);
+	int i, offset = 0;
+
+	iso = (struct usbip_iso_packet_descriptor *)malloc(size);
+	if (!iso)
+		return NULL;
+
+	for (i = 0; i < np; i++) {
+		usbip_pack_iso(&iso[i], &trx->iso_packet_desc[i], offset, 1);
+		usbip_iso_packet_correct_endian(&iso[i], 1);
+		offset += trx->iso_packet_desc[i].length;
+	}
+
+	*bufflen = size;
+
+	return iso;
+}
+
+// TODO: sgs
+static int stub_send_ret_submit(struct stub_device *sdev)
+{
+	struct list_head *pos, *tmp;
+	struct stub_priv *priv;
+	size_t txsize;
+	size_t total_size = 0;
+
+	while ((priv = dequeue_from_priv_tx(sdev)) != NULL) {
+		size_t sent;
+		struct libusb_transfer *trx = priv->trx;
+		struct usbip_header pdu_header;
+		struct usbip_iso_packet_descriptor *iso_buffer = NULL;
+		struct kvec *iov = NULL;
+		int iovnum = 0;
+		int offset = 0;
+
+		txsize = 0;
+		memset(&pdu_header, 0, sizeof(pdu_header));
+
+		if (trx->type == LIBUSB_TRANSFER_TYPE_ISOCHRONOUS) {
+			fixup_actual_length(trx);
+			iovnum = 2 + trx->num_iso_packets;
+		} else {
+			iovnum = 2;
+		}
+
+		iov = (struct kvec *)calloc(1, iovnum * sizeof(struct kvec));
+
+		if (!iov) {
+			usbip_event_add(&sdev->ud, SDEV_EVENT_ERROR_MALLOC);
+			return -1;
+		}
+
+		iovnum = 0;
+
+		/* 1. setup usbip_header */
+		setup_ret_submit_pdu(&pdu_header, trx);
+		usbip_dbg_stub_tx("setup txdata seqnum: %d trx: %p actl: %d\n",
+			  pdu_header.base.seqnum, trx, trx->actual_length);
+		usbip_header_correct_endian(&pdu_header, 1);
+
+		iov[iovnum].iov_base = &pdu_header;
+		iov[iovnum].iov_len  = sizeof(pdu_header);
+		iovnum++;
+		txsize += sizeof(pdu_header);
+
+		/* 2. setup transfer buffer */
+		if (priv->dir == USBIP_DIR_IN &&
+			trx->type != LIBUSB_TRANSFER_TYPE_ISOCHRONOUS &&
+			trx->actual_length > 0) {
+			if (trx->type == LIBUSB_TRANSFER_TYPE_CONTROL)
+				offset = 8;
+			iov[iovnum].iov_base = trx->buffer + offset;
+			iov[iovnum].iov_len  = trx->actual_length;
+			iovnum++;
+			txsize += trx->actual_length;
+		} else if (priv->dir == USBIP_DIR_IN &&
+			trx->type == LIBUSB_TRANSFER_TYPE_ISOCHRONOUS) {
+			/*
+			 * For isochronous packets: actual length is the sum of
+			 * the actual length of the individual, packets, but as
+			 * the packet offsets are not changed there will be
+			 * padding between the packets. To optimally use the
+			 * bandwidth the padding is not transmitted.
+			 */
+			int i;
+
+			for (i = 0; i < trx->num_iso_packets; i++) {
+				iov[iovnum].iov_base = trx->buffer + offset;
+				iov[iovnum].iov_len =
+					trx->iso_packet_desc[i].actual_length;
+				iovnum++;
+				offset += trx->iso_packet_desc[i].length;
+				txsize += trx->iso_packet_desc[i].actual_length;
+			}
+
+			if (txsize != sizeof(pdu_header) + trx->actual_length) {
+				devh_err(sdev->dev_handle,
+					"actual length of urb %d does not ",
+					trx->actual_length);
+				devh_err(sdev->dev_handle,
+					"match iso packet sizes %zu\n",
+					txsize-sizeof(pdu_header));
+				free(iov);
+				usbip_event_add(&sdev->ud,
+						SDEV_EVENT_ERROR_TCP);
+				return -1;
+			}
+		}
+
+		/* 3. setup iso_packet_descriptor */
+		if (trx->type == LIBUSB_TRANSFER_TYPE_ISOCHRONOUS) {
+			ssize_t len = 0;
+
+			iso_buffer = usbip_alloc_iso_desc_pdu(trx, &len);
+			if (!iso_buffer) {
+				usbip_event_add(&sdev->ud,
+						SDEV_EVENT_ERROR_MALLOC);
+				free(iov);
+				return -1;
+			}
+
+			iov[iovnum].iov_base = iso_buffer;
+			iov[iovnum].iov_len  = len;
+			txsize += len;
+			iovnum++;
+		}
+
+		sent = usbip_sendmsg(sdev->ud.sockfd, iov,  iovnum);
+		if (sent != txsize) {
+			devh_err(sdev->dev_handle,
+				"sendmsg failed!, retval %zd for %zd\n",
+				sent, txsize);
+			free(iov);
+			free(iso_buffer);
+			usbip_event_add(&sdev->ud, SDEV_EVENT_ERROR_TCP);
+			return -1;
+		}
+
+		free(iov);
+		if (iso_buffer)
+			free(iso_buffer);
+
+		total_size += txsize;
+	}
+
+	pthread_mutex_lock(&sdev->priv_lock);
+	list_for_each_safe(pos, tmp, &sdev->priv_free) {
+		priv = list_entry(pos, struct stub_priv, list);
+		stub_free_priv_and_trx(priv);
+	}
+	pthread_mutex_unlock(&sdev->priv_lock);
+
+	return total_size;
 }
 
 static struct stub_unlink *dequeue_from_unlink_tx(struct stub_device *sdev)
@@ -224,8 +415,7 @@ static void poll_events_and_complete(struct stub_device *sdev)
 void *stub_tx_loop(void *data)
 {
 	struct stub_device *sdev = (struct stub_device *)data;
-	// int ret_submit, ret_unlink;
-	int ret_unlink;
+	int ret_submit, ret_unlink;
 
 	while (!sdev->should_stop) {
 		poll_events_and_complete(sdev);
@@ -247,9 +437,9 @@ void *stub_tx_loop(void *data)
 		 * getting the status of the given-backed URB which has the
 		 * status of usb_submit_urb().
 		 */
-		// ret_submit = stub_send_ret_submit(sdev);
-		// if (ret_submit < 0)
-			// break;
+		ret_submit = stub_send_ret_submit(sdev);
+		if (ret_submit < 0)
+			break;
 
 		ret_unlink = stub_send_ret_unlink(sdev);
 		if (ret_unlink < 0)

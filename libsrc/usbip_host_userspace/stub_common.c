@@ -237,7 +237,7 @@ void usbip_header_correct_endian(struct usbip_header *pdu, int send)
 	}
 }
 
-static void usbip_iso_packet_correct_endian(
+void usbip_iso_packet_correct_endian(
 		struct usbip_iso_packet_descriptor *iso, int send)
 {
 	/* does not need all members. but copy all simply. */
@@ -254,7 +254,7 @@ static void usbip_iso_packet_correct_endian(
 	}
 }
 
-static void usbip_pack_iso(struct usbip_iso_packet_descriptor *iso,
+void usbip_pack_iso(struct usbip_iso_packet_descriptor *iso,
 			   struct libusb_iso_packet_descriptor *uiso,
 			   int offset, int pack)
 {
