@@ -279,7 +279,7 @@ static int valid_request(struct stub_device *sdev, struct usbip_header *pdu)
 		pthread_mutex_unlock(&ud->lock);
 	}
 	if (!valid) {
-		devh_err(sdev->dev_handle, "invalid request %08x:%08x(%d)\n",
+		devh_err(sdev->dev_handle, "invalid request (got %08x, have %08x, status %d)\n",
 			pdu->base.devid, sdev->devid, ud->status);
 	}
 	return valid;

@@ -142,8 +142,7 @@ static void read_usb_device_userspace(struct usbip_usb_device *udev,
 	strncpy(udev->busid, busid, SYSFS_BUS_ID_SIZE);
 
 	udev->busnum = libusb_get_bus_number(dev);
-	// udev->devnum = libusb_get_device_address(dev);
-	udev->devnum = libusb_get_port_number(dev);
+	udev->devnum = libusb_get_device_address(dev);
 	udev->speed = get_device_speed(dev);
 	udev->idVendor = desc->idVendor;
 	udev->idProduct = desc->idProduct;

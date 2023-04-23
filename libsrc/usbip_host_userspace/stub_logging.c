@@ -21,7 +21,8 @@ unsigned long usbip_debug_flag = 0xffffffff;
 int usbip_dev_printf(FILE *s, const char *level, struct libusb_device *dev)
 {
 	uint8_t bus = libusb_get_bus_number(dev);
-	uint8_t adr = libusb_get_device_address(dev);
+	uint8_t adr = libusb_get_port_number(dev);
+	// uint8_t adr = libusb_get_device_address(dev);
 
 	return fprintf(s, "%s:%d-%d ", level, bus, adr);
 }
@@ -151,7 +152,8 @@ static void usbip_dump_usb_device(struct libusb_device *dev)
 		config_acquired = 1;
 
 	dev_dbg(dev, "addr(%d)\n",
-		libusb_get_device_address(dev));
+		// libusb_get_device_address(dev));
+		libusb_get_port_number(dev));
 	/* TODO: device number, device path */
 	/* TODO: Transaction Translator info, tt */
 
