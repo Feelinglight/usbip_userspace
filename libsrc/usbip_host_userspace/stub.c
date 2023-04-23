@@ -1,4 +1,6 @@
 #include "stub.h"
+#include "stub_common.h"
+#include "stub_logging.h"
 
 
 static void stub_shutdown(struct usbip_device *ud)
@@ -189,10 +191,10 @@ int stub_start(struct stub_device *sdev)
 		err("start event handler");
 		return -1;
 	}
-	// if (pthread_create(&sdev->rx, NULL, stub_rx_loop, sdev)) {
-	// 	err("start recv thread");
-	// 	return -1;
-	// }
+	if (pthread_create(&sdev->rx, NULL, stub_rx_loop, sdev)) {
+		err("start recv thread");
+		return -1;
+	}
 	// if (pthread_create(&sdev->tx, NULL, stub_tx_loop, sdev)) {
 	// 	err("start send thread");
 	// 	return -1;
@@ -256,3 +258,68 @@ void stub_join(struct stub_device *sdev)
 	// pthread_join(sdev->rx, NULL);
 }
 
+uint8_t stub_get_transfer_flags(uint32_t in)
+{
+	uint8_t flags = 0;
+
+	if (in & USBIP_URB_SHORT_NOT_OK)
+		flags |= LIBUSB_TRANSFER_SHORT_NOT_OK;
+	if (in & USBIP_URB_ZERO_PACKET)
+		flags |= LIBUSB_TRANSFER_ADD_ZERO_PACKET;
+
+	/*
+	 * URB_FREE_BUFFER is turned off to free by stub_free_priv_and_trx()
+	 *
+	 * URB_ISO_ASAP, URB_NO_TRANSFER_DMA_MAP, URB_NO_FSBR and
+	 * URB_NO_INTERRUPT are ignored because unsupported by libusb.
+	 */
+	return flags;
+}
+
+static struct stub_endpoint *get_endpoint(struct stub_device *sdev, uint8_t ep)
+{
+	int i;
+	uint8_t ep_nr = ep & USB_ENDPOINT_NUMBER_MASK;
+
+	for (i = 0; i < sdev->num_eps; i++) {
+		if ((sdev->eps + i)->nr == ep_nr)
+			return sdev->eps + i;
+	}
+	return NULL;
+}
+
+uint8_t stub_get_transfer_type(struct stub_device *sdev, uint8_t ep)
+{
+	struct stub_endpoint *epp;
+
+	if (ep == 0)
+		return LIBUSB_TRANSFER_TYPE_CONTROL;
+
+	epp = get_endpoint(sdev, ep);
+	if (epp == NULL) {
+		dbg("Unknown endpoint %d", ep);
+		return 0xff;
+	}
+	return epp->type;
+}
+
+uint8_t stub_endpoint_dir(struct stub_device *sdev, uint8_t ep)
+{
+	struct stub_endpoint *epp;
+
+	epp = get_endpoint(sdev, ep);
+	if (epp == NULL) {
+		dbg("Direction for %d is undetermined", ep);
+		return 0;
+	}
+	return epp->dir;
+}
+
+int stub_endpoint_dir_out(struct stub_device *sdev, uint8_t ep)
+{
+	uint8_t dir = stub_endpoint_dir(sdev, ep);
+
+	if (dir == LIBUSB_ENDPOINT_OUT)
+		return 1;
+	return 0;
+}

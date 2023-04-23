@@ -70,6 +70,23 @@ struct stub_edev_data {
 	struct stub_endpoint eps[];
 };
 
+/* private data into libusb_transfer->user_data */
+struct stub_priv {
+	unsigned long seqnum;
+	struct list_head list;
+	struct stub_device *sdev;
+	struct libusb_transfer *trx;
+
+	uint8_t dir;
+	uint8_t unlinking;
+};
+
+struct stub_unlink {
+	unsigned long seqnum;
+	struct list_head list;
+	enum libusb_transfer_status status;
+};
+
 static inline
 struct stub_edev_data *edev_to_stub_edev_data(struct usbip_exported_device *edev)
 {
@@ -94,5 +111,23 @@ void stub_join(struct stub_device *sdev);
 
 void stub_device_cleanup_transfers(struct stub_device *sdev);
 void stub_device_cleanup_unlinks(struct stub_device *sdev);
+
+/* stub_rx.c */
+void *stub_rx_loop(void *data);
+
+/* stub_tx.c */
+void stub_enqueue_ret_unlink(struct stub_device *sdev, uint32_t seqnum,
+			     enum libusb_transfer_status status);
+void LIBUSB_CALL stub_complete(struct libusb_transfer *trx);
+void *stub_tx_loop(void *data);
+
+
+/* for libusb */
+extern libusb_context *stub_libusb_ctx;
+uint8_t stub_get_transfer_type(struct stub_device *sdev, uint8_t ep);
+uint8_t stub_endpoint_dir(struct stub_device *sdev, uint8_t ep);
+int stub_endpoint_dir_out(struct stub_device *sdev, uint8_t ep);
+uint8_t stub_get_transfer_flags(uint32_t in);
+
 
 #endif // __STUB_H

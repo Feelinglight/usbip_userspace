@@ -1,13 +1,16 @@
+#ifndef __STUB_LOGGING_H
+#define __STUB_LOGGING_H
+
 #include <stdio.h>
 #include <stddef.h>
 #include <libusb-1.0/libusb.h>
 
+#include "stub_common.h"
 
 extern unsigned long usbip_debug_flag;
 extern struct device_attribute dev_attr_usbip_debug;
 
 
-#ifndef USBIP_OS_NO_NR_ARGS
 #define pr_debug(...) \
 	fprintf(stdout, __VA_ARGS__)
 #define pr_err(...) \
@@ -74,10 +77,15 @@ enum {
 	usbip_dbg_with_flag(usbip_debug_stub_rx, fmt, ##args)
 #define usbip_dbg_stub_tx(fmt, args...) \
 	usbip_dbg_with_flag(usbip_debug_stub_tx, fmt, ##args)
-#endif /*! USBIP_OS_NO_NR_ARGS */
 
 
 int usbip_dev_printf(FILE *s, const char *level,
 			struct libusb_device *dev);
 int usbip_devh_printf(FILE *s, const char *level,
 			libusb_device_handle *dev_handle);
+
+void usbip_dump_buffer(char *buff, int bufflen);
+void usbip_dump_trx(struct libusb_transfer *trx);
+void usbip_dump_header(struct usbip_header *pdu);
+
+#endif // __STUB_LOGGING_H

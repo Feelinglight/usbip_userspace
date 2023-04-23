@@ -1,4 +1,5 @@
 #include "stub.h"
+#include "stub_logging.h"
 
 static unsigned long event_get(struct usbip_device *ud)
 {

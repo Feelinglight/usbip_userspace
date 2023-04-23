@@ -114,13 +114,14 @@ extern int usbip_use_debug ;
 	} while (0)
 
 #define __maybe_unused __attribute__((unused))
+#define __packed __attribute__((packed))
 
 struct usbip_usb_interface {
 	uint8_t bInterfaceClass;
 	uint8_t bInterfaceSubClass;
 	uint8_t bInterfaceProtocol;
 	uint8_t bInterfaceNumber;
-} __attribute__((packed));
+} __packed;
 
 struct usbip_usb_device {
 	char path[SYSFS_PATH_MAX];
@@ -140,7 +141,7 @@ struct usbip_usb_device {
 	uint8_t bConfigurationValue;
 	uint8_t bNumConfigurations;
 	uint8_t bNumInterfaces;
-} __attribute__((packed));
+} __packed;
 
 #define to_string(s)	#s
 
