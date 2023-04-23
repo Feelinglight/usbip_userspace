@@ -123,7 +123,6 @@ void *stub_tx_loop(void *data);
 
 
 /* for libusb */
-extern libusb_context *stub_libusb_ctx;
 uint8_t stub_get_transfer_type(struct stub_device *sdev, uint8_t ep);
 uint8_t stub_endpoint_dir(struct stub_device *sdev, uint8_t ep);
 int stub_endpoint_dir_out(struct stub_device *sdev, uint8_t ep);

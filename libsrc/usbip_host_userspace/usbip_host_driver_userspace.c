@@ -18,8 +18,7 @@
 #define BIND_DIR "/var/run/usbip/edevs/"
 #define BIND_MAX_PATH (SYSFS_BUS_ID_SIZE + 256)
 
-static libusb_context *libusb_ctx;
-
+libusb_context *libusb_ctx;
 
 static void get_device_busid(libusb_device *dev, char *buf)
 {

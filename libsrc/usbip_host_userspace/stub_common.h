@@ -209,15 +209,13 @@ struct usbip_device {
 	} eh_ops;
 };
 
-int usbip_sendmsg(struct usbip_device *ud, struct kvec *vec, size_t num);
+int usbip_sendmsg(int sockfd, struct kvec *vec, size_t num);
 int usbip_recv(int sockfd, void *buf, int size);
 
 struct stub_unlink;
 
-void usbip_pack_ret_submit(struct usbip_header *pdu,
-				struct libusb_transfer *trx);
-void usbip_pack_ret_unlink(struct usbip_header *pdu,
-				struct stub_unlink *unlink);
+int trxstat2error(enum libusb_transfer_status trxstat);
+enum libusb_transfer_status error2trxstat(int e);
 void usbip_header_correct_endian(struct usbip_header *pdu, int send);
 
 struct usbip_iso_packet_descriptor*

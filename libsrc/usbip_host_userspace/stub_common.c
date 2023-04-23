@@ -5,6 +5,41 @@
 #include "stub_common.h"
 #include "stub_logging.h"
 
+/* Send data over TCP/IP. */
+int usbip_sendmsg(int sockfd, struct kvec *vec, size_t num)
+{
+	int i, result;
+	struct kvec *iov;
+	size_t total = 0;
+
+	usbip_dbg_xmit("enter usbip_sendmsg %zd\n", num);
+
+	for (i = 0; i < (int)num; i++) {
+		iov = vec+i;
+
+		if (iov->iov_len == 0)
+			continue;
+
+		if (usbip_dbg_flag_xmit) {
+			pr_debug("sending, idx %d size %zd\n",
+					i, iov->iov_len);
+			usbip_dump_buffer((char *)(iov->iov_base),
+					iov->iov_len);
+		}
+
+		result = send(sockfd, (char *)(iov->iov_base),
+			iov->iov_len, 0);
+
+		if (result < 0) {
+			pr_debug("send err sock %d buf %p size %zu ",
+				sockfd, iov->iov_base, iov->iov_len);
+			pr_debug("ret %d total %zd\n", result, total);
+			return total;
+		}
+		total += result;
+	}
+	return total;
+}
 
 /* Receive data over TCP/IP. */
 int usbip_recv(int sockfd, void *buf, int size)
@@ -54,7 +89,7 @@ err:
 	return result;
 }
 
-static int trxstat2error(enum libusb_transfer_status trxstat)
+int trxstat2error(enum libusb_transfer_status trxstat)
 {
 	switch (trxstat) {
 	case LIBUSB_TRANSFER_COMPLETED:
@@ -72,7 +107,7 @@ static int trxstat2error(enum libusb_transfer_status trxstat)
 	return -ENOENT;
 }
 
-static enum libusb_transfer_status error2trxstat(int e)
+enum libusb_transfer_status error2trxstat(int e)
 {
 	switch (e) {
 	case 0:

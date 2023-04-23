@@ -195,10 +195,10 @@ int stub_start(struct stub_device *sdev)
 		err("start recv thread");
 		return -1;
 	}
-	// if (pthread_create(&sdev->tx, NULL, stub_tx_loop, sdev)) {
-	// 	err("start send thread");
-	// 	return -1;
-	// }
+	if (pthread_create(&sdev->tx, NULL, stub_tx_loop, sdev)) {
+		err("start send thread");
+		return -1;
+	}
 	pthread_mutex_lock(&sdev->ud.lock);
 	sdev->ud.status = SDEV_ST_USED;
 	pthread_mutex_unlock(&sdev->ud.lock);

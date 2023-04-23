@@ -89,3 +89,173 @@ void LIBUSB_CALL stub_complete(struct libusb_transfer *trx)
 	/* wake up tx_thread */
 	pthread_mutex_unlock(&sdev->tx_waitq);
 }
+
+
+static inline void setup_base_pdu(struct usbip_header_basic *base,
+				  uint32_t command, uint32_t seqnum)
+{
+	base->command	= command;
+	base->seqnum	= seqnum;
+	base->devid	= 0;
+	base->ep	= 0;
+	base->direction = 0;
+}
+
+// void usbip_pack_ret_submit(struct usbip_header *pdu,
+// 			   struct libusb_transfer *trx)
+// {
+// 	struct usbip_header_ret_submit *rpdu = &pdu->u.ret_submit;
+
+// 	rpdu->status		= trxstat2error(trx->status);
+// 	rpdu->actual_length	= trx->actual_length;
+// 	rpdu->start_frame	= 0;
+// 	rpdu->number_of_packets = trx->num_iso_packets;
+// 	rpdu->error_count	= 0;
+// }
+
+void usbip_pack_ret_unlink(struct usbip_header *pdu,
+			   struct stub_unlink *unlink)
+{
+	struct usbip_header_ret_unlink *rpdu = &pdu->u.ret_unlink;
+
+	rpdu->status = trxstat2error(unlink->status);
+}
+
+// static void setup_ret_submit_pdu(struct usbip_header *rpdu,
+// 				 struct libusb_transfer *trx)
+// {
+// 	struct stub_priv *priv = (struct stub_priv *) trx->user_data;
+
+// 	setup_base_pdu(&rpdu->base, USBIP_RET_SUBMIT, priv->seqnum);
+// 	usbip_pack_ret_submit(rpdu, trx);
+// }
+
+static void setup_ret_unlink_pdu(struct usbip_header *rpdu,
+				 struct stub_unlink *unlink)
+{
+	setup_base_pdu(&rpdu->base, USBIP_RET_UNLINK, unlink->seqnum);
+	usbip_pack_ret_unlink(rpdu, unlink);
+}
+
+static struct stub_unlink *dequeue_from_unlink_tx(struct stub_device *sdev)
+{
+	struct list_head *pos, *tmp;
+	struct stub_unlink *unlink;
+
+	pthread_mutex_lock(&sdev->priv_lock);
+
+	list_for_each_safe(pos, tmp, &sdev->unlink_tx) {
+		unlink = list_entry(pos, struct stub_unlink, list);
+		list_del(&unlink->list);
+		list_add(&unlink->list, sdev->unlink_free.prev);
+		pthread_mutex_unlock(&sdev->priv_lock);
+		return unlink;
+	}
+
+	pthread_mutex_unlock(&sdev->priv_lock);
+
+	return NULL;
+}
+
+static int stub_send_ret_unlink(struct stub_device *sdev)
+{
+	struct list_head *pos, *tmp;
+	struct stub_unlink *unlink;
+	struct kvec iov[1];
+	size_t txsize;
+	size_t total_size = 0;
+
+	while ((unlink = dequeue_from_unlink_tx(sdev)) != NULL) {
+		size_t sent;
+		struct usbip_header pdu_header;
+
+		txsize = 0;
+		memset(&pdu_header, 0, sizeof(pdu_header));
+		memset(&iov, 0, sizeof(iov));
+
+		usbip_dbg_stub_tx("setup ret unlink %lu\n", unlink->seqnum);
+
+		/* 1. setup usbip_header */
+		setup_ret_unlink_pdu(&pdu_header, unlink);
+		usbip_header_correct_endian(&pdu_header, 1);
+
+		iov[0].iov_base = &pdu_header;
+		iov[0].iov_len  = sizeof(pdu_header);
+		txsize += sizeof(pdu_header);
+
+		sent = usbip_sendmsg(sdev->ud.sockfd, iov, 1);
+		if (sent != txsize) {
+			devh_err(sdev->dev_handle,
+				"sendmsg failed!, retval %zd for %zd\n",
+				sent, txsize);
+			usbip_event_add(&sdev->ud, SDEV_EVENT_ERROR_TCP);
+			return -1;
+		}
+
+		usbip_dbg_stub_tx("send txdata\n");
+		total_size += txsize;
+	}
+
+	pthread_mutex_lock(&sdev->priv_lock);
+
+	list_for_each_safe(pos, tmp, &sdev->unlink_free) {
+		unlink = list_entry(pos, struct stub_unlink, list);
+		list_del(&unlink->list);
+		free(unlink);
+	}
+
+	pthread_mutex_unlock(&sdev->priv_lock);
+
+	return total_size;
+}
+
+extern libusb_context *libusb_ctx;
+
+static void poll_events_and_complete(struct stub_device *sdev)
+{
+	struct timeval tv = {0, 0};
+	int ret;
+
+	ret = libusb_handle_events_timeout(libusb_ctx, &tv);
+	if (ret != 0 && ret != LIBUSB_ERROR_TIMEOUT)
+		usbip_event_add(&sdev->ud, SDEV_EVENT_ERROR_SUBMIT);
+}
+
+void *stub_tx_loop(void *data)
+{
+	struct stub_device *sdev = (struct stub_device *)data;
+	// int ret_submit, ret_unlink;
+	int ret_unlink;
+
+	while (!sdev->should_stop) {
+		poll_events_and_complete(sdev);
+
+		if (usbip_event_happened(&sdev->ud))
+			break;
+
+		/*
+		 * send_ret_submit comes earlier than send_ret_unlink.  stub_rx
+		 * looks at only priv_init queue. If the completion of a URB is
+		 * earlier than the receive of CMD_UNLINK, priv is moved to
+		 * priv_tx queue and stub_rx does not find the target priv. In
+		 * this case, vhci_rx receives the result of the submit request
+		 * and then receives the result of the unlink request. The
+		 * result of the submit is given back to the usbcore as the
+		 * completion of the unlink request. The request of the
+		 * unlink is ignored. This is ok because a driver who calls
+		 * usb_unlink_urb() understands the unlink was too late by
+		 * getting the status of the given-backed URB which has the
+		 * status of usb_submit_urb().
+		 */
+		// ret_submit = stub_send_ret_submit(sdev);
+		// if (ret_submit < 0)
+			// break;
+
+		ret_unlink = stub_send_ret_unlink(sdev);
+		if (ret_unlink < 0)
+			break;
+
+	}
+	usbip_dbg_stub_tx("end of stub_tx_loop\n");
+	return NULL;
+}
