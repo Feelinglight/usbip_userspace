@@ -15,12 +15,14 @@
 #ifdef CONFIG_USBIP_DEBUG
 unsigned long usbip_debug_flag = 0xffffffff;
 #else
-unsigned long usbip_debug_flag = 0xffffffff;
+// unsigned long usbip_debug_flag = 0xffffffff;
+unsigned long usbip_debug_flag = 0;
 #endif
 
 int usbip_dev_printf(FILE *s, const char *level, struct libusb_device *dev)
 {
 	uint8_t bus = libusb_get_bus_number(dev);
+
 	uint8_t adr = libusb_get_port_number(dev);
 	// uint8_t adr = libusb_get_device_address(dev);
 
