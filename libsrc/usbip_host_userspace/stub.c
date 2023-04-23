@@ -206,45 +206,79 @@ int stub_start(struct stub_device *sdev)
 	return 0;
 }
 
+static struct stub_priv *stub_priv_pop_from_listhead(struct list_head *listhead)
+{
+	struct list_head *pos, *tmp;
+	struct stub_priv *priv;
+
+	list_for_each_safe(pos, tmp, listhead) {
+		priv = list_entry(pos, struct stub_priv, list);
+		pr_warn("Found pending trx %p.\n", priv->trx);
+	}
+
+	return NULL;
+}
+
+static struct stub_priv *stub_priv_pop(struct stub_device *sdev)
+{
+	struct stub_priv *priv;
+
+	pthread_mutex_lock(&sdev->priv_lock);
+
+	priv = stub_priv_pop_from_listhead(&sdev->priv_init);
+	if (priv)
+		goto done;
+
+	priv = stub_priv_pop_from_listhead(&sdev->priv_tx);
+	if (priv)
+		goto done;
+
+	priv = stub_priv_pop_from_listhead(&sdev->priv_free);
+
+done:
+	pthread_mutex_unlock(&sdev->priv_lock);
+	return priv;
+}
+
 void stub_device_cleanup_transfers(struct stub_device *sdev)
 {
-	// struct stub_priv *priv;
-	// struct libusb_transfer *trx;
+	struct stub_priv *priv;
+	struct libusb_transfer *trx;
 
 	dev_dbg(sdev->dev, "free sdev %p\n", sdev);
 
-	// while (1) {
-	// 	priv = stub_priv_pop(sdev);
-	// 	if (!priv)
-	// 		break;
+	while (1) {
+		priv = stub_priv_pop(sdev);
+		if (!priv)
+			break;
 
-	// 	trx = priv->trx;
-	// 	libusb_cancel_transfer(trx);
+		trx = priv->trx;
+		libusb_cancel_transfer(trx);
 
-	// 	dev_dbg(sdev->dev, "free trx %p\n", trx);
-	// 	free(priv);
-	// 	free(trx->buffer);
-	// 	libusb_free_transfer(trx);
-	// }
+		dev_dbg(sdev->dev, "free trx %p\n", trx);
+		free(priv);
+		free(trx->buffer);
+		libusb_free_transfer(trx);
+	}
 }
 
 void stub_device_cleanup_unlinks(struct stub_device *sdev)
 {
 	/* derived from stub_shutdown_connection */
-	// struct list_head *pos, *tmp;
-	// struct stub_unlink *unlink;
+	struct list_head *pos, *tmp;
+	struct stub_unlink *unlink;
 
-	// pthread_mutex_lock(&sdev->priv_lock);
-	// list_for_each_safe(pos, tmp, &sdev->unlink_tx) {
-	// 	unlink = list_entry(pos, struct stub_unlink, list);
-	// 	list_del(&unlink->list);
-	// 	free(unlink);
-	// }
-	// list_for_each_safe(pos, tmp, &sdev->unlink_free) {
-	// 	unlink = list_entry(pos, struct stub_unlink, list);
-	// 	list_del(&unlink->list);
-	// 	free(unlink);
-	// }
+	pthread_mutex_lock(&sdev->priv_lock);
+	list_for_each_safe(pos, tmp, &sdev->unlink_tx) {
+		unlink = list_entry(pos, struct stub_unlink, list);
+		list_del(&unlink->list);
+		free(unlink);
+	}
+	list_for_each_safe(pos, tmp, &sdev->unlink_free) {
+		unlink = list_entry(pos, struct stub_unlink, list);
+		list_del(&unlink->list);
+		free(unlink);
+	}
 	pthread_mutex_unlock(&sdev->priv_lock);
 }
 
@@ -254,8 +288,8 @@ void stub_join(struct stub_device *sdev)
 		return;
 	dbg("waiting on libusb transmission threads");
 	usbip_join_eh(&sdev->ud);
-	// pthread_join(sdev->tx, NULL);
-	// pthread_join(sdev->rx, NULL);
+	pthread_join(sdev->tx, NULL);
+	pthread_join(sdev->rx, NULL);
 }
 
 uint8_t stub_get_transfer_flags(uint32_t in)

@@ -400,9 +400,6 @@ err_out:
 
 int export_device_userspace(struct usbip_exported_device *edev, int sockfd)
 {
-	// Проверить, что устройство уже не используется
-	// Записать номер сокета в sysfs -> sockfd
-
 	struct stub_device *sdev;
 	struct stub_edev_data *edev_data = edev_to_stub_edev_data(edev);
 	int ret;
