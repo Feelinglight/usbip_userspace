@@ -130,6 +130,8 @@ static int run_command(const struct command *cmd, int argc, char *argv[])
 	return cmd->fn(argc, argv);
 }
 
+#include "libusb-1.0/libusb.h"
+
 int main(int argc, char *argv[])
 {
 	static const struct option opts[] = {

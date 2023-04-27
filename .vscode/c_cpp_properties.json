@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/",
+                "${workspaceFolder}/src/",
+                "${workspaceFolder}/libsrc/"
+                // "${workspaceFolder}/build/",
+                // "${workspaceFolder}/../../../include",
+                // "${workspaceFolder}/../../../include/generated",
+                // "${workspaceFolder}/../../../arch/x86/include",
+                // "${workspaceFolder}/../../../arch/x86/include/generated"
+            ],
+            "defines": [
+                "HAVE_CONFIG_H"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu99",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}

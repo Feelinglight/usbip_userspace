@@ -1,4 +1,11 @@
 # SPDX-License-Identifier: GPL-2.0-only
+build/
+build_kernel/
+tmp*
+configure~
+config.h.in~
+.vscode/*
+!.vscode/c_cpp_properties.json
 Makefile
 Makefile.in
 aclocal.m4

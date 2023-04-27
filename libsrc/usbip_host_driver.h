@@ -10,6 +10,10 @@
 #ifndef __USBIP_HOST_DRIVER_H
 #define __USBIP_HOST_DRIVER_H
 
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #include <stdint.h>
 #include "usbip_common.h"
 #include "list.h"

@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 #include <libudev.h>
+#include <assert.h>
 
 #include "usbip_common.h"
 #include "usbip_host_common.h"
@@ -25,7 +26,8 @@
 
 extern struct udev *udev_context;
 
-static int32_t read_attr_usbip_status(struct usbip_usb_device *udev)
+
+static int32_t read_device_status(struct usbip_usb_device *udev)
 {
 	char status_attr_path[SYSFS_PATH_MAX];
 	int size;
@@ -82,7 +84,7 @@ struct usbip_exported_device *usbip_exported_device_new(
 	if (hdriver->ops.read_device(edev->sudev, &edev->udev) < 0)
 		goto err;
 
-	edev->status = read_attr_usbip_status(&edev->udev);
+	edev->status = read_device_status(&edev->udev);
 	if (edev->status < 0)
 		goto err;
 
@@ -115,7 +117,8 @@ err:
 	return NULL;
 }
 
-static int refresh_exported_devices(struct usbip_host_driver *hdriver)
+static int refresh_exported_devices(struct usbip_host_driver *hdriver,
+	struct usbip_exported_devices *edevs)
 {
 	struct usbip_exported_device *edev;
 	struct udev_enumerate *enumerate;
@@ -144,43 +147,23 @@ static int refresh_exported_devices(struct usbip_host_driver *hdriver)
 				continue;
 			}
 
-			list_add(&edev->node, &hdriver->edev_list);
-			hdriver->ndevs++;
+			list_add(&edev->node, &edevs->edev_list);
+			edevs->ndevs++;
 		}
 	}
 
 	return 0;
 }
 
-static void usbip_exported_device_destroy(struct list_head *devs)
+int usbip_generic_driver_open(__maybe_unused struct usbip_host_driver *hdriver)
 {
-	struct list_head *i, *tmp;
-	struct usbip_exported_device *edev;
-
-	list_for_each_safe(i, tmp, devs) {
-		edev = list_entry(i, struct usbip_exported_device, node);
-		list_del(i);
-		free(edev);
-	}
-}
-
-int usbip_generic_driver_open(struct usbip_host_driver *hdriver)
-{
-	int rc;
-
 	udev_context = udev_new();
 	if (!udev_context) {
 		err("udev_new failed");
 		return -1;
 	}
 
-	rc = refresh_exported_devices(hdriver);
-	if (rc < 0)
-		goto err;
 	return 0;
-err:
-	udev_unref(udev_context);
-	return -1;
 }
 
 void usbip_generic_driver_close(struct usbip_host_driver *hdriver)
@@ -188,94 +171,35 @@ void usbip_generic_driver_close(struct usbip_host_driver *hdriver)
 	if (!hdriver)
 		return;
 
-	usbip_exported_device_destroy(&hdriver->edev_list);
-
 	udev_unref(udev_context);
 }
 
-int usbip_generic_refresh_device_list(struct usbip_host_driver *hdriver)
+int usbip_generic_refresh_device_list(struct usbip_host_driver *hdriver,
+	struct usbip_exported_devices *edevs)
 {
 	int rc;
 
-	usbip_exported_device_destroy(&hdriver->edev_list);
+	edevs->ndevs = 0;
+	INIT_LIST_HEAD(&edevs->edev_list);
 
-	hdriver->ndevs = 0;
-	INIT_LIST_HEAD(&hdriver->edev_list);
+	rc = refresh_exported_devices(hdriver, edevs);
 
-	rc = refresh_exported_devices(hdriver);
 	if (rc < 0)
 		return -1;
 
 	return 0;
 }
 
-int usbip_export_device(struct usbip_exported_device *edev, int sockfd)
-{
-	char attr_name[] = "usbip_sockfd";
-	char sockfd_attr_path[SYSFS_PATH_MAX];
-	int size;
-	char sockfd_buff[30];
-	int ret;
-
-	if (edev->status != SDEV_ST_AVAILABLE) {
-		dbg("device not available: %s", edev->udev.busid);
-		switch (edev->status) {
-		case SDEV_ST_ERROR:
-			dbg("status SDEV_ST_ERROR");
-			ret = ST_DEV_ERR;
-			break;
-		case SDEV_ST_USED:
-			dbg("status SDEV_ST_USED");
-			ret = ST_DEV_BUSY;
-			break;
-		default:
-			dbg("status unknown: 0x%x", edev->status);
-			ret = -1;
-		}
-		return ret;
-	}
-
-	/* only the first interface is true */
-	size = snprintf(sockfd_attr_path, sizeof(sockfd_attr_path), "%s/%s",
-			edev->udev.path, attr_name);
-	if (size < 0 || (unsigned int)size >= sizeof(sockfd_attr_path)) {
-		err("exported device path length %i >= %lu or < 0", size,
-		    (long unsigned)sizeof(sockfd_attr_path));
-		return -1;
-	}
-
-	size = snprintf(sockfd_buff, sizeof(sockfd_buff), "%d\n", sockfd);
-	if (size < 0 || (unsigned int)size >= sizeof(sockfd_buff)) {
-		err("socket length %i >= %lu or < 0", size,
-		    (long unsigned)sizeof(sockfd_buff));
-		return -1;
-	}
-
-	ret = write_sysfs_attribute(sockfd_attr_path, sockfd_buff,
-				    strlen(sockfd_buff));
-	if (ret < 0) {
-		err("write_sysfs_attribute failed: sockfd %s to %s",
-		    sockfd_buff, sockfd_attr_path);
-		return ret;
-	}
-
-	info("connect: %s", edev->udev.busid);
-
-	return ret;
-}
-
 struct usbip_exported_device *usbip_generic_get_device(
-		struct usbip_host_driver *hdriver, int num)
+		struct usbip_exported_devices *edevs, const char *busid)
 {
 	struct list_head *i;
 	struct usbip_exported_device *edev;
-	int cnt = 0;
 
-	list_for_each(i, &hdriver->edev_list) {
+	list_for_each(i, &edevs->edev_list) {
 		edev = list_entry(i, struct usbip_exported_device, node);
-		if (num == cnt)
+		if (!strncmp(busid, edev->udev.busid, SYSFS_BUS_ID_SIZE))
 			return edev;
-		cnt++;
 	}
 
 	return NULL;

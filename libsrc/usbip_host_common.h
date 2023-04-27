@@ -20,25 +20,35 @@
 #include "sysfs_utils.h"
 
 struct usbip_host_driver;
+struct usbip_exported_devices;
 
 struct usbip_host_driver_ops {
 	int (*open)(struct usbip_host_driver *hdriver);
 	void (*close)(struct usbip_host_driver *hdriver);
-	int (*refresh_device_list)(struct usbip_host_driver *hdriver);
+	int (*get_device_list)(struct usbip_host_driver *hdriver,
+		struct usbip_exported_devices *edevs);
+	void (*free_device_list)(struct usbip_exported_devices *edevs);
 	struct usbip_exported_device * (*get_device)(
-		struct usbip_host_driver *hdriver, int num);
-
+		struct usbip_exported_devices *edevs, const char *busid);
 	int (*read_device)(struct udev_device *sdev,
 			   struct usbip_usb_device *dev);
 	int (*read_interface)(struct usbip_usb_device *udev, int i,
 			      struct usbip_usb_interface *uinf);
 	int (*is_my_device)(struct udev_device *udev);
+	int (*bind_device)(char *busid);
+	int (*unbind_device)(char *busid);
+	int (*export_device)(struct usbip_exported_device *edev, int sockfd);
+	int (*run_redirect)(struct usbip_exported_device *edev);
 };
 
-struct usbip_host_driver {
+struct usbip_exported_devices {
 	int ndevs;
 	/* list of exported device */
 	struct list_head edev_list;
+	void *data;
+};
+
+struct usbip_host_driver {
 	const char *udev_subsystem;
 	struct usbip_host_driver_ops ops;
 };
@@ -66,27 +76,54 @@ static inline void usbip_driver_close(struct usbip_host_driver *hdriver)
 	hdriver->ops.close(hdriver);
 }
 
-static inline int usbip_refresh_device_list(struct usbip_host_driver *hdriver)
+static inline int usbip_refresh_device_list(struct usbip_host_driver *hdriver,
+	struct usbip_exported_devices *edevs)
 {
-	if (!hdriver->ops.refresh_device_list)
+	if (!hdriver->ops.get_device_list)
 		return -EOPNOTSUPP;
-	return hdriver->ops.refresh_device_list(hdriver);
+	return hdriver->ops.get_device_list(hdriver, edevs);
 }
 
-static inline struct usbip_exported_device *
-usbip_get_device(struct usbip_host_driver *hdriver, int num)
+static inline int usbip_free_device_list(struct usbip_host_driver *hdriver,
+	struct usbip_exported_devices *edevs)
+{
+	if (!hdriver->ops.free_device_list)
+		return -EOPNOTSUPP;
+	hdriver->ops.free_device_list(edevs);
+	return 0;
+}
+
+static inline int usbip_export_device(struct usbip_host_driver *hdriver,
+	struct usbip_exported_device *edev, int sockfd)
+{
+	if (!hdriver->ops.export_device)
+		return -EOPNOTSUPP;
+	return hdriver->ops.export_device(edev, sockfd);
+}
+
+static inline struct usbip_exported_device *usbip_get_device(
+	struct usbip_host_driver *hdriver,
+	struct usbip_exported_devices *edevs, const char *busid)
 {
 	if (!hdriver->ops.get_device)
 		return NULL;
-	return hdriver->ops.get_device(hdriver, num);
+	return hdriver->ops.get_device(edevs, busid);
+}
+
+static inline int usbip_run_redirect(struct usbip_host_driver *hdriver,
+	struct usbip_exported_device *edev)
+{
+	if (!hdriver->ops.run_redirect)
+		return -EOPNOTSUPP;
+	return hdriver->ops.run_redirect(edev);
 }
 
 /* Helper functions for implementing driver backend */
 int usbip_generic_driver_open(struct usbip_host_driver *hdriver);
 void usbip_generic_driver_close(struct usbip_host_driver *hdriver);
-int usbip_generic_refresh_device_list(struct usbip_host_driver *hdriver);
-int usbip_export_device(struct usbip_exported_device *edev, int sockfd);
+int usbip_generic_refresh_device_list(struct usbip_host_driver *hdriver,
+	struct usbip_exported_devices *edevs);
 struct usbip_exported_device *usbip_generic_get_device(
-		struct usbip_host_driver *hdriver, int num);
+		struct usbip_exported_devices *edevs, const char *busid);
 
 #endif /* __USBIP_HOST_COMMON_H */

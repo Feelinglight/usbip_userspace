@@ -50,6 +50,31 @@ AC_CHECK_HEADER([libudev.h],
 			      [AC_MSG_ERROR([Missing udev library!])])],
 		[AC_MSG_ERROR([Missing /usr/include/libudev.h])])
 
+# Checks for libysb library if stub_userspace feature enabled
+AC_ARG_ENABLE([stub_userspace],
+ [AS_HELP_STRING([--enable-stub_userspace=yes|no],
+                 [Enable or disable userspace implementation of stub driver. Default is disabled.])],
+ [enable_stub_userspace="$enableval"],
+ [enable_stub_userspace="no"])
+
+stub_userspace_val=0
+if test "x$enable_stub_userspace" = "xyes" ; then
+	stub_userspace_val=1
+
+	# Checks for libusb library
+	AC_CHECK_HEADER(
+		[libusb-1.0/libusb.h],
+		[AC_CHECK_LIB(
+			[usb-1.0],
+			[libusb_init],
+			[LIBS="$LIBS -lusb-1.0"],
+			[AC_MSG_ERROR([libusb library not found])])],
+		[AC_MSG_ERROR([No libusb-1.0/libusb.h header])])
+
+fi
+
+AC_DEFINE_UNQUOTED([USBIP_HOST_DRIVER_USERSPACE],[$stub_userspace_val],[Enable output to stub_userspace])
+
 # Checks for libwrap library.
 AC_MSG_CHECKING([whether to use the libwrap (TCP wrappers) library])
 AC_ARG_WITH([tcp-wrappers],

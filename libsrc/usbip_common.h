@@ -95,18 +95,33 @@ extern int usbip_use_debug ;
 	}								\
 	} while (0)
 
+#define ndbg(fmt, args...)						\
+	do {								\
+	if (usbip_use_debug) {						\
+		if (usbip_use_syslog) {					\
+			syslog(LOG_DEBUG, dbg_fmt("!!!!!!!!!!!!!!!!!! " fmt), ##args);	\
+		}							\
+		if (usbip_use_stderr) {					\
+			fprintf(stderr, dbg_fmt("!!!!!!!!!!!!!!!!!! " fmt), ##args);		\
+		}							\
+	}								\
+	} while (0)
+
 #define BUG()						\
 	do {						\
 		err("sorry, it's a bug!");		\
 		abort();				\
 	} while (0)
 
+#define __maybe_unused __attribute__((unused))
+#define __packed __attribute__((packed))
+
 struct usbip_usb_interface {
 	uint8_t bInterfaceClass;
 	uint8_t bInterfaceSubClass;
 	uint8_t bInterfaceProtocol;
-	uint8_t padding;	/* alignment */
-} __attribute__((packed));
+	uint8_t bInterfaceNumber;
+} __packed;
 
 struct usbip_usb_device {
 	char path[SYSFS_PATH_MAX];
@@ -126,7 +141,7 @@ struct usbip_usb_device {
 	uint8_t bConfigurationValue;
 	uint8_t bNumConfigurations;
 	uint8_t bNumInterfaces;
-} __attribute__((packed));
+} __packed;
 
 #define to_string(s)	#s
 
