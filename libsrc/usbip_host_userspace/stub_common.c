@@ -6,7 +6,7 @@
 #include "stub_logging.h"
 
 /* Send data over TCP/IP. */
-int usbip_sendmsg(int sockfd, struct kvec *vec, size_t num)
+int usbip_sendmsg(SSL* ssl_conn, struct kvec *vec, size_t num)
 {
 	int i, result;
 	struct kvec *iov;
@@ -27,12 +27,12 @@ int usbip_sendmsg(int sockfd, struct kvec *vec, size_t num)
 					iov->iov_len);
 		}
 
-		result = send(sockfd, (char *)(iov->iov_base),
-			iov->iov_len, 0);
+		result = SSL_write(ssl_conn, (char *)(iov->iov_base),
+			iov->iov_len);
 
 		if (result < 0) {
-			pr_debug("send err sock %d buf %p size %zu ",
-				sockfd, iov->iov_base, iov->iov_len);
+			pr_debug("send err sock 0x%p buf %p size %zu ",
+				ssl_conn, iov->iov_base, iov->iov_len);
 			pr_debug("ret %d total %zd\n", result, total);
 			return total;
 		}
@@ -42,7 +42,7 @@ int usbip_sendmsg(int sockfd, struct kvec *vec, size_t num)
 }
 
 /* Receive data over TCP/IP. */
-int usbip_recv(int sockfd, void *buf, int size)
+int usbip_recv(SSL* ssl_conn, void *buf, int size)
 {
 	int result;
 	int total = 0;
@@ -62,7 +62,7 @@ int usbip_recv(int sockfd, void *buf, int size)
 
 	do {
 		usbip_dbg_xmit("receiving %d\n", size);
-			result = recv(sockfd, bp, size, 0);
+			result = SSL_read(ssl_conn, bp, size);
 
 		if (result <= 0) {
 			pr_debug("receive err buf %p size %u ",
@@ -291,7 +291,7 @@ int usbip_recv_xbuff(struct usbip_device *ud, struct libusb_transfer *trx,
 	/*
 	 * Take offset for CONTROL setup
 	 */
-	ret = usbip_recv(ud->sockfd, trx->buffer + offset, size);
+	ret = usbip_recv(ud->ssl_conn, trx->buffer + offset, size);
 	if (ret != size) {
 		devh_err(trx->dev_handle, "recv xbuf, %d\n", ret);
 		usbip_event_add(ud, SDEV_EVENT_ERROR_TCP);
@@ -321,7 +321,7 @@ int usbip_recv_iso(struct usbip_device *ud, struct libusb_transfer *trx)
 		return -1;
 	}
 
-	ret = usbip_recv(ud->sockfd, buff, size);
+	ret = usbip_recv(ud->ssl_conn, buff, size);
 	if (ret != size) {
 		devh_err(trx->dev_handle,
 			"recv iso_frame_descriptor, %d\n", ret);

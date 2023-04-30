@@ -398,7 +398,7 @@ err_out:
 	return -1;
 }
 
-int export_device_userspace(struct usbip_exported_device *edev, int sockfd)
+int export_device_userspace(struct usbip_exported_device *edev, SSL* ssl_conn)
 {
 	struct stub_device *sdev;
 	struct stub_edev_data *edev_data = edev_to_stub_edev_data(edev);
@@ -428,7 +428,7 @@ int export_device_userspace(struct usbip_exported_device *edev, int sockfd)
 		goto err_close_lib;
 	}
 
-	sdev->ud.sockfd = sockfd;
+	sdev->ud.ssl_conn = ssl_conn;
 
 	return 0;
 

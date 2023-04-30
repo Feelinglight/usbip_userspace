@@ -15,6 +15,8 @@
 #include <stdint.h>
 #include <libudev.h>
 #include <errno.h>
+#include <openssl/ssl.h>
+
 #include "list.h"
 #include "usbip_common.h"
 #include "sysfs_utils.h"
@@ -37,7 +39,7 @@ struct usbip_host_driver_ops {
 	int (*is_my_device)(struct udev_device *udev);
 	int (*bind_device)(char *busid);
 	int (*unbind_device)(char *busid);
-	int (*export_device)(struct usbip_exported_device *edev, int sockfd);
+	int (*export_device)(struct usbip_exported_device *edev, SSL* ssl_conn);
 	int (*run_redirect)(struct usbip_exported_device *edev);
 };
 
@@ -94,11 +96,11 @@ static inline int usbip_free_device_list(struct usbip_host_driver *hdriver,
 }
 
 static inline int usbip_export_device(struct usbip_host_driver *hdriver,
-	struct usbip_exported_device *edev, int sockfd)
+	struct usbip_exported_device *edev, SSL* ssl_conn)
 {
 	if (!hdriver->ops.export_device)
 		return -EOPNOTSUPP;
-	return hdriver->ops.export_device(edev, sockfd);
+	return hdriver->ops.export_device(edev, ssl_conn);
 }
 
 static inline struct usbip_exported_device *usbip_get_device(

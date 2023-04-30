@@ -11,7 +11,7 @@
 #endif
 
 #include <sys/types.h>
-
+#include <openssl/ssl.h>
 #include <stdint.h>
 
 extern int usbip_port;
@@ -165,14 +165,14 @@ uint16_t usbip_net_pack_uint16_t(int pack, uint16_t num);
 void usbip_net_pack_usb_device(int pack, struct usbip_usb_device *udev);
 void usbip_net_pack_usb_interface(int pack, struct usbip_usb_interface *uinf);
 
-ssize_t usbip_net_recv(int sockfd, void *buff, size_t bufflen);
-ssize_t usbip_net_send(int sockfd, void *buff, size_t bufflen);
-int usbip_net_send_op_common(int sockfd, uint32_t code, uint32_t status);
-int usbip_net_recv_op_common(int sockfd, uint16_t *code, int *status);
+ssize_t usbip_net_recv(SSL* ssl_conn, void *buff, size_t bufflen);
+ssize_t usbip_net_send(SSL* ssl_conn, void *buff, size_t bufflen);
+int usbip_net_send_op_common(SSL* ssl_conn, uint32_t code, uint32_t status);
+int usbip_net_recv_op_common(SSL* ssl_conn, uint16_t *code, int *status);
 int usbip_net_set_reuseaddr(int sockfd);
 int usbip_net_set_nodelay(int sockfd);
 int usbip_net_set_keepalive(int sockfd);
 int usbip_net_set_v6only(int sockfd);
-int usbip_net_tcp_connect(char *hostname, char *port);
+int usbip_net_tcp_connect(char *hostname, char *port, SSL* ssl_conn);
 
 #endif /* __USBIP_NETWORK_H */

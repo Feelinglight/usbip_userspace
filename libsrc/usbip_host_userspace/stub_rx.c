@@ -477,7 +477,7 @@ again:
 	memset(&pdu, 0, sizeof(pdu));
 
 	/* receive a pdu header */
-	ret = usbip_recv(ud->sockfd, &pdu, sizeof(pdu));
+	ret = usbip_recv(ud->ssl_conn, &pdu, sizeof(pdu));
 
 	if (ret != sizeof(pdu)) {
 		devh_err(sdev->dev_handle, "recv a header, %d\n", ret);

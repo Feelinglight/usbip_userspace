@@ -22,6 +22,7 @@
 #include "vhci_driver.h"
 #include "usbip_common.h"
 #include "usbip_network.h"
+#include "ssl_utils.h"
 #include "usbip.h"
 
 static const char usbip_attach_usage_string[] =
@@ -117,7 +118,7 @@ err_out:
 	return -1;
 }
 
-static int query_import_device(int sockfd, char *busid)
+static int query_import_device(int sockfd, SSL* ssl_conn, char *busid)
 {
 	int rc;
 	struct op_import_request request;
@@ -129,7 +130,7 @@ static int query_import_device(int sockfd, char *busid)
 	memset(&reply, 0, sizeof(reply));
 
 	/* send a request */
-	rc = usbip_net_send_op_common(sockfd, OP_REQ_IMPORT, 0);
+	rc = usbip_net_send_op_common(ssl_conn, OP_REQ_IMPORT, 0);
 	if (rc < 0) {
 		err("send op_common");
 		return -1;
@@ -139,21 +140,21 @@ static int query_import_device(int sockfd, char *busid)
 
 	PACK_OP_IMPORT_REQUEST(0, &request);
 
-	rc = usbip_net_send(sockfd, (void *) &request, sizeof(request));
+	rc = usbip_net_send(ssl_conn, (void *) &request, sizeof(request));
 	if (rc < 0) {
 		err("send op_import_request");
 		return -1;
 	}
 
 	/* receive a reply */
-	rc = usbip_net_recv_op_common(sockfd, &code, &status);
+	rc = usbip_net_recv_op_common(ssl_conn, &code, &status);
 	if (rc < 0) {
 		err("Attach Request for %s failed - %s\n",
 		    busid, usbip_op_common_status_string(status));
 		return -1;
 	}
 
-	rc = usbip_net_recv(sockfd, (void *) &reply, sizeof(reply));
+	rc = usbip_net_recv(ssl_conn, (void *) &reply, sizeof(reply));
 	if (rc < 0) {
 		err("recv op_import_reply");
 		return -1;
@@ -176,17 +177,19 @@ static int attach_device(char *host, char *busid)
 	int sockfd;
 	int rc;
 	int rhport;
+	SSL* ssl_conn = NULL;
 
-	sockfd = usbip_net_tcp_connect(host, usbip_port_string);
+	sockfd = usbip_net_tcp_connect(host, usbip_port_string, ssl_conn);
 	if (sockfd < 0) {
-		err("tcp connect");
+		err("ssl connect");
 		return -1;
 	}
 
-	rhport = query_import_device(sockfd, busid);
+	rhport = query_import_device(sockfd, ssl_conn, busid);
 	if (rhport < 0)
 		return -1;
 
+	destroy_connection(ssl_conn);
 	close(sockfd);
 
 	rc = record_connection(host, usbip_port_string, busid, rhport);
