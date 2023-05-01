@@ -366,7 +366,7 @@ int process_request(int listenfd)
 	if (childpid == 0) {
 		close(listenfd);
 
-		ssl_conn = wrap_connection(connfd);
+		ssl_conn = wrap_server_connection(connfd);
 		if (!ssl_conn) {
 			err("wrap_connection error");
 			exit(0);
@@ -484,6 +484,7 @@ static void set_signal(void)
 	sigaction(SIGINT, &act, NULL);
 	act.sa_handler = SIG_IGN;
 	sigaction(SIGCHLD, &act, NULL);
+	signal(SIGPIPE, SIG_IGN);
 }
 
 static const char *pid_file;
@@ -557,7 +558,7 @@ static int do_standalone_mode(int daemonize, int ipv4, int ipv6)
 		usbip_driver_close(driver);
 		return -1;
 	}
-	init_libssl();
+	init_libssl(ssl_server);
 	nsockfd = listen_all_addrinfo(ai_head, sockfdlist,
 		sizeof(sockfdlist) / sizeof(*sockfdlist));
 	freeaddrinfo(ai_head);
