@@ -107,8 +107,10 @@ static ssize_t usbip_net_xmit(struct usbip_sock* sock, void *buff, size_t buffle
 		else
 			nbytes = sock->recv(sock->id, buff, bufflen);
 
-		if (nbytes <= 0)
+		if (nbytes <= 0) {
+			dbg("sock->recv error, code %d", errno);
 			return -1;
+		}
 
 		buff	 = (void *)((intptr_t) buff + nbytes);
 		bufflen	-= nbytes;
@@ -135,6 +137,23 @@ static inline void usbip_net_pack_op_common(int pack,
 	op_common->version = usbip_net_pack_uint16_t(pack, op_common->version);
 	op_common->code = usbip_net_pack_uint16_t(pack, op_common->code);
 	op_common->status = usbip_net_pack_uint32_t(pack, op_common->status);
+}
+
+int usbip_net_send_target_host(struct usbip_sock* sock, const char* target_host)
+{
+	struct op_target_host_request request;
+	int rc;
+
+	memset(&request, 0, sizeof(request));
+	strncpy(request.target_host, target_host, MAX_TARGET_HOST_SIZE-1);
+
+	rc = usbip_net_send(sock, (void *) &request, sizeof(request));
+	if (rc < 0) {
+		dbg("usbip_net_send failed");
+		return -1;
+	}
+
+	return 0;
 }
 
 int usbip_net_send_op_common(struct usbip_sock* sock, uint32_t code, uint32_t status)
@@ -314,9 +333,9 @@ static int tcp_sock_recv(void* sock_id, void *buf, int num)
 	return recv(sockfd, buf, num, MSG_WAITALL);
 }
 
-void tcp_sock_init(struct usbip_sock* sock, int sockfd)
+void tcp_sock_init(struct usbip_sock* sock, int* sockfd)
 {
-	sock->id = (void*)(&sockfd);
+	sock->id = (void*)(sockfd);
 	sock->send = tcp_sock_send;
 	sock->recv = tcp_sock_recv;
 }

@@ -54,7 +54,13 @@ static int get_exported_devices(char *host, int sockfd)
 	int status;
 
 	struct usbip_sock sock;
-	tcp_sock_init(&sock, sockfd);
+	tcp_sock_init(&sock, &sockfd);
+
+	rc = usbip_net_send_target_host(&sock, host);
+	if (rc < 0) {
+		dbg("usbip_net_send_target_host failed");
+		return -1;
+	}
 
 	rc = usbip_net_send_op_common(&sock, OP_REQ_DEVLIST, 0);
 	if (rc < 0) {
@@ -132,18 +138,19 @@ static int list_exported_devices(char *host)
 {
 	int rc;
 	int sockfd;
+	char* proxy_host = "localhost";
 
-	sockfd = usbip_net_tcp_connect(host, usbip_port_string);
+	sockfd = usbip_net_tcp_connect(proxy_host, usbip_port_string);
 	if (sockfd < 0) {
-		err("could not connect to %s:%s: %s", host,
+		err("could not connect to %s:%s: %s", proxy_host,
 		    usbip_port_string, gai_strerror(sockfd));
 		return -1;
 	}
-	dbg("connected to %s:%s", host, usbip_port_string);
+	dbg("connected to %s:%s", proxy_host, usbip_port_string);
 
 	rc = get_exported_devices(host, sockfd);
 	if (rc < 0) {
-		err("failed to get device list from %s", host);
+		err("failed to get device list from %s", proxy_host);
 		return -1;
 	}
 
