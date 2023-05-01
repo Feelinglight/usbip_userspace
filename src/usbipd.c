@@ -90,7 +90,7 @@ static void usbipd_help(void)
 	printf("%s\n", usbipd_help_string);
 }
 
-static int recv_request_import(SSL* ssl_conn)
+static int recv_request_import(struct usbip_sock* sock)
 {
 	struct op_import_request req;
 	struct usbip_exported_devices edevs;
@@ -108,7 +108,7 @@ static int recv_request_import(SSL* ssl_conn)
 		return -1;
 	}
 
-	rc = usbip_net_recv(ssl_conn, &req, sizeof(req));
+	rc = usbip_net_recv(sock, &req, sizeof(req));
 	if (rc < 0) {
 		dbg("usbip_net_recv failed: import request");
 		goto err_free_edevs;
@@ -126,7 +126,7 @@ static int recv_request_import(SSL* ssl_conn)
 		// usbip_net_set_nodelay(sockfd);
 
 		/* export device needs a TCP/IP socket descriptor */
-		status = usbip_export_device(driver, edev, ssl_conn);
+		status = usbip_export_device(driver, edev, (SSL*)sock->id);
 		if (status < 0)
 			status = ST_NA;
 	} else {
@@ -134,7 +134,7 @@ static int recv_request_import(SSL* ssl_conn)
 		status = ST_NODEV;
 	}
 
-	rc = usbip_net_send_op_common(ssl_conn, OP_REP_IMPORT, status);
+	rc = usbip_net_send_op_common(sock, OP_REP_IMPORT, status);
 	if (rc < 0) {
 		dbg("usbip_net_send_op_common failed: %#0x", OP_REP_IMPORT);
 		goto err_free_edevs;
@@ -148,7 +148,7 @@ static int recv_request_import(SSL* ssl_conn)
 	memcpy(&pdu_udev, &edev->udev, sizeof(pdu_udev));
 	usbip_net_pack_usb_device(1, &pdu_udev);
 
-	rc = usbip_net_send(ssl_conn, &pdu_udev, sizeof(pdu_udev));
+	rc = usbip_net_send(sock, &pdu_udev, sizeof(pdu_udev));
 	if (rc < 0) {
 		dbg("usbip_net_send failed: devinfo");
 		goto err_free_edevs;
@@ -171,7 +171,7 @@ err_free_edevs:
 	return -1;
 }
 
-static int send_reply_devlist(SSL* ssl_conn, struct usbip_exported_devices *edevs)
+static int send_reply_devlist(struct usbip_sock* sock, struct usbip_exported_devices *edevs)
 {
 	struct usbip_exported_device *edev;
 	struct usbip_usb_device pdu_udev;
@@ -192,14 +192,14 @@ static int send_reply_devlist(SSL* ssl_conn, struct usbip_exported_devices *edev
 	reply.ndev = edevs->ndevs;
 	info("exportable devices: %d", reply.ndev);
 
-	rc = usbip_net_send_op_common(ssl_conn, OP_REP_DEVLIST, ST_OK);
+	rc = usbip_net_send_op_common(sock, OP_REP_DEVLIST, ST_OK);
 	if (rc < 0) {
 		dbg("usbip_net_send_op_common failed: %#0x", OP_REP_DEVLIST);
 		return -1;
 	}
 	PACK_OP_DEVLIST_REPLY(1, &reply);
 
-	rc = usbip_net_send(ssl_conn, &reply, sizeof(reply));
+	rc = usbip_net_send(sock, &reply, sizeof(reply));
 	if (rc < 0) {
 		dbg("usbip_net_send failed: %#0x", OP_REP_DEVLIST);
 		return -1;
@@ -211,7 +211,7 @@ static int send_reply_devlist(SSL* ssl_conn, struct usbip_exported_devices *edev
 		memcpy(&pdu_udev, &edev->udev, sizeof(pdu_udev));
 		usbip_net_pack_usb_device(1, &pdu_udev);
 
-		rc = usbip_net_send(ssl_conn, &pdu_udev, sizeof(pdu_udev));
+		rc = usbip_net_send(sock, &pdu_udev, sizeof(pdu_udev));
 		if (rc < 0) {
 			dbg("usbip_net_send failed: pdu_udev");
 			return -1;
@@ -222,7 +222,7 @@ static int send_reply_devlist(SSL* ssl_conn, struct usbip_exported_devices *edev
 			memcpy(&pdu_uinf, &edev->uinf[i], sizeof(pdu_uinf));
 			usbip_net_pack_usb_interface(1, &pdu_uinf);
 
-			rc = usbip_net_send(ssl_conn, &pdu_uinf, sizeof(pdu_uinf));
+			rc = usbip_net_send(sock, &pdu_uinf, sizeof(pdu_uinf));
 			if (rc < 0) {
 				err("usbip_net_send failed: pdu_uinf");
 				return -1;
@@ -233,7 +233,7 @@ static int send_reply_devlist(SSL* ssl_conn, struct usbip_exported_devices *edev
 	return 0;
 }
 
-static int recv_request_devlist(SSL* ssl_conn)
+static int recv_request_devlist(struct usbip_sock* sock)
 {
 	struct usbip_exported_devices edevs;
 	struct op_devlist_request req;
@@ -247,13 +247,13 @@ static int recv_request_devlist(SSL* ssl_conn)
 
 	memset(&req, 0, sizeof(req));
 
-	rc = usbip_net_recv(ssl_conn, &req, sizeof(req));
+	rc = usbip_net_recv(sock, &req, sizeof(req));
 	if (rc < 0) {
 		dbg("usbip_net_recv failed: devlist request");
 		goto err_free_edevs;
 	}
 
-	rc = send_reply_devlist(ssl_conn, &edevs);
+	rc = send_reply_devlist(sock, &edevs);
 	if (rc < 0) {
 		dbg("send_reply_devlist failed");
 		goto err_free_edevs;
@@ -267,25 +267,25 @@ err_free_edevs:
 	return -1;
 }
 
-static int recv_pdu(SSL* ssl_conn)
+static int recv_pdu(struct usbip_sock* sock)
 {
 	uint16_t code = OP_UNSPEC;
 	int ret;
 	int status;
 
-	ret = usbip_net_recv_op_common(ssl_conn, &code, &status);
+	ret = usbip_net_recv_op_common(sock, &code, &status);
 	if (ret < 0) {
 		dbg("could not receive opcode: %#0x", code);
 		return -1;
 	}
 
-	info("received request: %#0x(0x%p)", code, ssl_conn);
+	info("received request: %#0x(0x%p)", code, sock->id);
 	switch (code) {
 	case OP_REQ_DEVLIST:
-		ret = recv_request_devlist(ssl_conn);
+		ret = recv_request_devlist(sock);
 		break;
 	case OP_REQ_IMPORT:
-		ret = recv_request_import(ssl_conn);
+		ret = recv_request_import(sock);
 		break;
 	case OP_REQ_DEVINFO:
 	case OP_REQ_CRYPKEY:
@@ -295,9 +295,9 @@ static int recv_pdu(SSL* ssl_conn)
 	}
 
 	if (ret == 0)
-		info("request %#0x(0x%p): complete", code, ssl_conn);
+		info("request %#0x(0x%p): complete", code, sock->id);
 	else
-		info("request %#0x(0x%p): failed", code, ssl_conn);
+		info("request %#0x(0x%p): failed", code, sock->id);
 
 	return ret;
 }
@@ -371,10 +371,12 @@ int process_request(int listenfd)
 			err("wrap_connection error");
 			exit(0);
 		}
+		struct usbip_sock sock;
+		ssl_sock_init(&sock, ssl_conn);
 
-		recv_pdu(ssl_conn);
+		recv_pdu(&sock);
+
 		destroy_connection(ssl_conn);
-
 		exit(0);
 	}
 	close(connfd);

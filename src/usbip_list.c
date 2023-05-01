@@ -27,7 +27,6 @@
 
 #include "usbip_common.h"
 #include "usbip_network.h"
-#include "ssl_utils.h"
 #include "usbip.h"
 
 static const char usbip_list_usage_string[] =
@@ -42,7 +41,7 @@ void usbip_list_usage(void)
 	printf("usage: %s", usbip_list_usage_string);
 }
 
-static int get_exported_devices(char *host, SSL* ssl_conn)
+static int get_exported_devices(char *host, int sockfd)
 {
 	char product_name[100];
 	char class_name[100];
@@ -54,13 +53,16 @@ static int get_exported_devices(char *host, SSL* ssl_conn)
 	int rc, j;
 	int status;
 
-	rc = usbip_net_send_op_common(ssl_conn, OP_REQ_DEVLIST, 0);
+	struct usbip_sock sock;
+	tcp_sock_init(&sock, sockfd);
+
+	rc = usbip_net_send_op_common(&sock, OP_REQ_DEVLIST, 0);
 	if (rc < 0) {
 		dbg("usbip_net_send_op_common failed");
 		return -1;
 	}
 
-	rc = usbip_net_recv_op_common(ssl_conn, &code, &status);
+	rc = usbip_net_recv_op_common(&sock, &code, &status);
 	if (rc < 0) {
 		err("Exported Device List Request failed - %s\n",
 		    usbip_op_common_status_string(status));
@@ -68,7 +70,7 @@ static int get_exported_devices(char *host, SSL* ssl_conn)
 	}
 
 	memset(&reply, 0, sizeof(reply));
-	rc = usbip_net_recv(ssl_conn, &reply, sizeof(reply));
+	rc = usbip_net_recv(&sock, &reply, sizeof(reply));
 	if (rc < 0) {
 		dbg("usbip_net_recv_op_devlist failed");
 		return -1;
@@ -87,7 +89,7 @@ static int get_exported_devices(char *host, SSL* ssl_conn)
 
 	for (i = 0; i < reply.ndev; i++) {
 		memset(&udev, 0, sizeof(udev));
-		rc = usbip_net_recv(ssl_conn, &udev, sizeof(udev));
+		rc = usbip_net_recv(&sock, &udev, sizeof(udev));
 		if (rc < 0) {
 			dbg("usbip_net_recv failed: usbip_usb_device[%d]", i);
 			return -1;
@@ -104,7 +106,7 @@ static int get_exported_devices(char *host, SSL* ssl_conn)
 		printf("%11s: %s\n", "", class_name);
 
 		for (j = 0; j < udev.bNumInterfaces; j++) {
-			rc = usbip_net_recv(ssl_conn, &uintf, sizeof(uintf));
+			rc = usbip_net_recv(&sock, &uintf, sizeof(uintf));
 			if (rc < 0) {
 				err("usbip_net_recv failed: usbip_usb_intf[%d]",
 						j);
@@ -130,9 +132,8 @@ static int list_exported_devices(char *host)
 {
 	int rc;
 	int sockfd;
-	SSL* ssl_conn = NULL;
 
-	sockfd = usbip_net_tcp_connect(host, usbip_port_string, ssl_conn);
+	sockfd = usbip_net_tcp_connect(host, usbip_port_string);
 	if (sockfd < 0) {
 		err("could not connect to %s:%s: %s", host,
 		    usbip_port_string, gai_strerror(sockfd));
@@ -140,13 +141,12 @@ static int list_exported_devices(char *host)
 	}
 	dbg("connected to %s:%s", host, usbip_port_string);
 
-	rc = get_exported_devices(host, ssl_conn);
+	rc = get_exported_devices(host, sockfd);
 	if (rc < 0) {
 		err("failed to get device list from %s", host);
 		return -1;
 	}
 
-	destroy_connection(ssl_conn);
 	close(sockfd);
 
 	return 0;

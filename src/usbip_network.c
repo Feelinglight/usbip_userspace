@@ -92,7 +92,7 @@ void usbip_net_pack_usb_interface(int pack __attribute__((unused)),
 	/* uint8_t members need nothing */
 }
 
-static ssize_t usbip_net_xmit(SSL* ssl_conn, void *buff, size_t bufflen,
+static ssize_t usbip_net_xmit(struct usbip_sock* sock, void *buff, size_t bufflen,
 			      int sending)
 {
 	ssize_t nbytes;
@@ -103,9 +103,9 @@ static ssize_t usbip_net_xmit(SSL* ssl_conn, void *buff, size_t bufflen,
 
 	do {
 		if (sending)
-			nbytes = SSL_write(ssl_conn, buff, bufflen);
+			nbytes = sock->send(sock->id, buff, bufflen);
 		else
-			nbytes = SSL_read(ssl_conn, buff, bufflen);
+			nbytes = sock->recv(sock->id, buff, bufflen);
 
 		if (nbytes <= 0)
 			return -1;
@@ -119,14 +119,14 @@ static ssize_t usbip_net_xmit(SSL* ssl_conn, void *buff, size_t bufflen,
 	return total;
 }
 
-ssize_t usbip_net_recv(SSL* ssl_conn, void *buff, size_t bufflen)
+ssize_t usbip_net_recv(struct usbip_sock* sock, void *buff, size_t bufflen)
 {
-	return usbip_net_xmit(ssl_conn, buff, bufflen, 0);
+	return usbip_net_xmit(sock, buff, bufflen, 0);
 }
 
-ssize_t usbip_net_send(SSL* ssl_conn, void *buff, size_t bufflen)
+ssize_t usbip_net_send(struct usbip_sock* sock, void *buff, size_t bufflen)
 {
-	return usbip_net_xmit(ssl_conn, buff, bufflen, 1);
+	return usbip_net_xmit(sock, buff, bufflen, 1);
 }
 
 static inline void usbip_net_pack_op_common(int pack,
@@ -137,7 +137,7 @@ static inline void usbip_net_pack_op_common(int pack,
 	op_common->status = usbip_net_pack_uint32_t(pack, op_common->status);
 }
 
-int usbip_net_send_op_common(SSL* ssl_conn, uint32_t code, uint32_t status)
+int usbip_net_send_op_common(struct usbip_sock* sock, uint32_t code, uint32_t status)
 {
 	struct op_common op_common;
 	int rc;
@@ -150,7 +150,7 @@ int usbip_net_send_op_common(SSL* ssl_conn, uint32_t code, uint32_t status)
 
 	usbip_net_pack_op_common(1, &op_common);
 
-	rc = usbip_net_send(ssl_conn, &op_common, sizeof(op_common));
+	rc = usbip_net_send(sock, &op_common, sizeof(op_common));
 	if (rc < 0) {
 		dbg("usbip_net_send failed: %d", rc);
 		return -1;
@@ -159,14 +159,14 @@ int usbip_net_send_op_common(SSL* ssl_conn, uint32_t code, uint32_t status)
 	return 0;
 }
 
-int usbip_net_recv_op_common(SSL* ssl_conn, uint16_t *code, int *status)
+int usbip_net_recv_op_common(struct usbip_sock* sock, uint16_t *code, int *status)
 {
 	struct op_common op_common;
 	int rc;
 
 	memset(&op_common, 0, sizeof(op_common));
 
-	rc = usbip_net_recv(ssl_conn, &op_common, sizeof(op_common));
+	rc = usbip_net_recv(sock, &op_common, sizeof(op_common));
 	if (rc < 0) {
 		dbg("usbip_net_recv failed: %d", rc);
 		goto err;
@@ -258,7 +258,7 @@ int usbip_net_set_v6only(int sockfd)
 /*
  * IPv6 Ready
  */
-int usbip_net_tcp_connect(char *hostname, char *service, __maybe_unused SSL* ssl_conn)
+int usbip_net_tcp_connect(char *hostname, char *service)
 {
 	struct addrinfo hints, *res, *rp;
 	int sockfd;
@@ -300,4 +300,43 @@ int usbip_net_tcp_connect(char *hostname, char *service, __maybe_unused SSL* ssl
 		return EAI_SYSTEM;
 
 	return sockfd;
+}
+
+static int tcp_sock_send(void* sock_id, const void *buf, int num)
+{
+	int sockfd = *(int*)sock_id;
+	return send(sockfd, buf, num, 0);
+}
+
+static int tcp_sock_recv(void* sock_id, void *buf, int num)
+{
+	int sockfd = *(int*)sock_id;
+	return recv(sockfd, buf, num, MSG_WAITALL);
+}
+
+void tcp_sock_init(struct usbip_sock* sock, int sockfd)
+{
+	sock->id = (void*)(&sockfd);
+	sock->send = tcp_sock_send;
+	sock->recv = tcp_sock_recv;
+}
+
+
+static int ssl_sock_send(void* sock_id, const void *buf, int num)
+{
+	SSL* ssl_conn = (SSL*)sock_id;
+	return SSL_write(ssl_conn, buf, num);
+}
+
+static int ssl_sock_recv(void* sock_id, void *buf, int num)
+{
+	SSL* ssl_conn = (SSL*)sock_id;
+	return SSL_read(ssl_conn, buf, num);
+}
+
+void ssl_sock_init(struct usbip_sock* sock, SSL* ssl_conn)
+{
+	sock->id = (void*)(ssl_conn);
+	sock->send = ssl_sock_send;
+	sock->recv = ssl_sock_recv;
 }
