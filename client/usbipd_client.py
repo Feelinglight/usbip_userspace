@@ -43,7 +43,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
                         for s in read_ready:
 
                             if s == self.request:
-                                proxy_client_data = self.request.recv(4096)
+                                proxy_client_data = self.request.recv(4096 * 4)
                                 if proxy_client_data:
                                     # print("client: ", usbip_client_data)
                                     tls_sock.send(proxy_client_data)
@@ -52,7 +52,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 
                             if s == tls_sock:
                                 try:
-                                    proxy_server_data = tls_sock.recv(4096)
+                                    proxy_server_data = tls_sock.recv(4096 * 4)
                                     if proxy_server_data:
                                         # print("server: ", usbip_server_data)
                                         self.request.send(proxy_server_data)
@@ -75,13 +75,13 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 
 
 def server_run():
+    socketserver.TCPServer.allow_reuse_address = True
     with socketserver.TCPServer((HOST, PROXY_PORT), MyTCPHandler) as server:
         server.serve_forever()
 
 
 def main():
     server_run()
-    # def_ctx()
 
 
 if __name__ == "__main__":
