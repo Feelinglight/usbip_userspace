@@ -117,7 +117,7 @@ err_out:
 	return -1;
 }
 
-static int query_import_device(int sockfd, char *busid)
+static int query_import_device(int sockfd, char *busid, const char* target_host)
 {
 	int rc;
 	struct op_import_request request;
@@ -128,8 +128,17 @@ static int query_import_device(int sockfd, char *busid)
 	memset(&request, 0, sizeof(request));
 	memset(&reply, 0, sizeof(reply));
 
+	struct usbip_sock sock;
+	tcp_sock_init(&sock, &sockfd);
+
+	rc = usbip_net_send_target_host(&sock, target_host);
+	if (rc < 0) {
+		dbg("usbip_net_send_target_host failed");
+		return -1;
+	}
+
 	/* send a request */
-	rc = usbip_net_send_op_common(sockfd, OP_REQ_IMPORT, 0);
+	rc = usbip_net_send_op_common(&sock, OP_REQ_IMPORT, 0);
 	if (rc < 0) {
 		err("send op_common");
 		return -1;
@@ -139,21 +148,21 @@ static int query_import_device(int sockfd, char *busid)
 
 	PACK_OP_IMPORT_REQUEST(0, &request);
 
-	rc = usbip_net_send(sockfd, (void *) &request, sizeof(request));
+	rc = usbip_net_send(&sock, (void *) &request, sizeof(request));
 	if (rc < 0) {
 		err("send op_import_request");
 		return -1;
 	}
 
 	/* receive a reply */
-	rc = usbip_net_recv_op_common(sockfd, &code, &status);
+	rc = usbip_net_recv_op_common(&sock, &code, &status);
 	if (rc < 0) {
 		err("Attach Request for %s failed - %s\n",
 		    busid, usbip_op_common_status_string(status));
 		return -1;
 	}
 
-	rc = usbip_net_recv(sockfd, (void *) &reply, sizeof(reply));
+	rc = usbip_net_recv(&sock, (void *) &reply, sizeof(reply));
 	if (rc < 0) {
 		err("recv op_import_reply");
 		return -1;
@@ -177,19 +186,20 @@ static int attach_device(char *host, char *busid)
 	int rc;
 	int rhport;
 
-	sockfd = usbip_net_tcp_connect(host, usbip_port_string);
+	char* proxy_host = "localhost";
+
+	sockfd = usbip_net_tcp_connect(proxy_host, usbip_port_string);
 	if (sockfd < 0) {
-		err("tcp connect");
 		return -1;
 	}
 
-	rhport = query_import_device(sockfd, busid);
+	rhport = query_import_device(sockfd, busid, host);
 	if (rhport < 0)
 		return -1;
 
 	close(sockfd);
 
-	rc = record_connection(host, usbip_port_string, busid, rhport);
+	rc = record_connection(proxy_host, usbip_port_string, busid, rhport);
 	if (rc < 0) {
 		err("record connection");
 		return -1;

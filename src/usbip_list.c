@@ -53,13 +53,22 @@ static int get_exported_devices(char *host, int sockfd)
 	int rc, j;
 	int status;
 
-	rc = usbip_net_send_op_common(sockfd, OP_REQ_DEVLIST, 0);
+	struct usbip_sock sock;
+	tcp_sock_init(&sock, &sockfd);
+
+	rc = usbip_net_send_target_host(&sock, host);
+	if (rc < 0) {
+		dbg("usbip_net_send_target_host failed");
+		return -1;
+	}
+
+	rc = usbip_net_send_op_common(&sock, OP_REQ_DEVLIST, 0);
 	if (rc < 0) {
 		dbg("usbip_net_send_op_common failed");
 		return -1;
 	}
 
-	rc = usbip_net_recv_op_common(sockfd, &code, &status);
+	rc = usbip_net_recv_op_common(&sock, &code, &status);
 	if (rc < 0) {
 		err("Exported Device List Request failed - %s\n",
 		    usbip_op_common_status_string(status));
@@ -67,7 +76,7 @@ static int get_exported_devices(char *host, int sockfd)
 	}
 
 	memset(&reply, 0, sizeof(reply));
-	rc = usbip_net_recv(sockfd, &reply, sizeof(reply));
+	rc = usbip_net_recv(&sock, &reply, sizeof(reply));
 	if (rc < 0) {
 		dbg("usbip_net_recv_op_devlist failed");
 		return -1;
@@ -86,7 +95,7 @@ static int get_exported_devices(char *host, int sockfd)
 
 	for (i = 0; i < reply.ndev; i++) {
 		memset(&udev, 0, sizeof(udev));
-		rc = usbip_net_recv(sockfd, &udev, sizeof(udev));
+		rc = usbip_net_recv(&sock, &udev, sizeof(udev));
 		if (rc < 0) {
 			dbg("usbip_net_recv failed: usbip_usb_device[%d]", i);
 			return -1;
@@ -103,7 +112,7 @@ static int get_exported_devices(char *host, int sockfd)
 		printf("%11s: %s\n", "", class_name);
 
 		for (j = 0; j < udev.bNumInterfaces; j++) {
-			rc = usbip_net_recv(sockfd, &uintf, sizeof(uintf));
+			rc = usbip_net_recv(&sock, &uintf, sizeof(uintf));
 			if (rc < 0) {
 				err("usbip_net_recv failed: usbip_usb_intf[%d]",
 						j);
@@ -129,18 +138,19 @@ static int list_exported_devices(char *host)
 {
 	int rc;
 	int sockfd;
+	char* proxy_host = "localhost";
 
-	sockfd = usbip_net_tcp_connect(host, usbip_port_string);
+	sockfd = usbip_net_tcp_connect(proxy_host, usbip_port_string);
 	if (sockfd < 0) {
-		err("could not connect to %s:%s: %s", host,
+		err("could not connect to %s:%s: %s", proxy_host,
 		    usbip_port_string, gai_strerror(sockfd));
 		return -1;
 	}
-	dbg("connected to %s:%s", host, usbip_port_string);
+	dbg("connected to %s:%s", proxy_host, usbip_port_string);
 
 	rc = get_exported_devices(host, sockfd);
 	if (rc < 0) {
-		err("failed to get device list from %s", host);
+		err("failed to get device list from %s", proxy_host);
 		return -1;
 	}
 

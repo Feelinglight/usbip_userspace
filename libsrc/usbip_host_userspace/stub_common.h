@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <libusb-1.0/libusb.h>
+#include <openssl/ssl.h>
 
 #include "usbip_common.h"
 
@@ -195,7 +196,7 @@ struct usbip_device {
 	/* lock for status */
 	pthread_mutex_t lock;
 
-	int sockfd;
+	SSL* ssl_conn;
 
 	unsigned long event;
 	pthread_t eh;
@@ -209,8 +210,8 @@ struct usbip_device {
 	} eh_ops;
 };
 
-int usbip_sendmsg(int sockfd, struct kvec *vec, size_t num);
-int usbip_recv(int sockfd, void *buf, int size);
+int usbip_sendmsg(SSL* ssl_conn, struct kvec *vec, size_t num);
+int usbip_recv(SSL* ssl_conn, void *buf, int size);
 
 struct stub_unlink;
 

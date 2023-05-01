@@ -11,12 +11,20 @@
 #endif
 
 #include <sys/types.h>
-
 #include <stdint.h>
+#include "ssl_utils.h"
+#include "usbip_common.h"
 
 extern int usbip_port;
 extern char *usbip_port_string;
 void usbip_setup_port_number(char *arg);
+
+struct usbip_sock {
+	void* id;
+	int (*send)(void* sock_id, const void *buf, int num);
+	int (*recv)(void* sock_id, void *buf, int num);
+};
+
 
 /* ---------------------------------------------------------------------- */
 /* Common header for all the kinds of PDUs. */
@@ -160,19 +168,30 @@ struct op_devlist_reply_extra {
 	(reply)->ndev = usbip_net_pack_uint32_t(pack, (reply)->ndev);\
 } while (0)
 
+#define MAX_TARGET_HOST_SIZE	20
+
+struct op_target_host_request {
+	char target_host[MAX_TARGET_HOST_SIZE];
+} __attribute__((packed));
+
 uint32_t usbip_net_pack_uint32_t(int pack, uint32_t num);
 uint16_t usbip_net_pack_uint16_t(int pack, uint16_t num);
 void usbip_net_pack_usb_device(int pack, struct usbip_usb_device *udev);
 void usbip_net_pack_usb_interface(int pack, struct usbip_usb_interface *uinf);
 
-ssize_t usbip_net_recv(int sockfd, void *buff, size_t bufflen);
-ssize_t usbip_net_send(int sockfd, void *buff, size_t bufflen);
-int usbip_net_send_op_common(int sockfd, uint32_t code, uint32_t status);
-int usbip_net_recv_op_common(int sockfd, uint16_t *code, int *status);
+void tcp_sock_init(struct usbip_sock* sock, int* sockfd);
+void ssl_sock_init(struct usbip_sock* sock, SSL* ssl_conn);
+
+ssize_t usbip_net_recv(struct usbip_sock* sock, void *buff, size_t bufflen);
+ssize_t usbip_net_send(struct usbip_sock* sock, void *buff, size_t bufflen);
+int usbip_net_send_op_common(struct usbip_sock* sock, uint32_t code, uint32_t status);
+int usbip_net_recv_op_common(struct usbip_sock* sock, uint16_t *code, int *status);
+int usbip_net_send_target_host(struct usbip_sock* sock, const char* target_host);
 int usbip_net_set_reuseaddr(int sockfd);
 int usbip_net_set_nodelay(int sockfd);
 int usbip_net_set_keepalive(int sockfd);
 int usbip_net_set_v6only(int sockfd);
 int usbip_net_tcp_connect(char *hostname, char *port);
+
 
 #endif /* __USBIP_NETWORK_H */

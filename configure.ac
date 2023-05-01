@@ -75,6 +75,16 @@ fi
 
 AC_DEFINE_UNQUOTED([USBIP_HOST_DRIVER_USERSPACE],[$stub_userspace_val],[Enable output to stub_userspace])
 
+# Checks for libssl library
+AC_CHECK_HEADER(
+	[openssl/ssl.h],
+	[AC_CHECK_LIB(
+		[ssl],
+		[OPENSSL_init_ssl],
+		[LIBS="$LIBS -lssl"],
+		[AC_MSG_ERROR([libssl library not found])])],
+	[AC_MSG_ERROR([No libssl/ssl.h header])])
+
 # Checks for libwrap library.
 AC_MSG_CHECKING([whether to use the libwrap (TCP wrappers) library])
 AC_ARG_WITH([tcp-wrappers],
