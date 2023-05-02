@@ -48,14 +48,23 @@ Whole project consists of four parts:
 
 
 [Install]
-    0. Generate configuration scripts.
-	$ ./autogen.sh
+    ---- server ----
+    build kernel v5.15.94
+    clone https://github.com/Feelinglight/usbip_userspace/tree/develop to kernel/tools/usb/
 
-    1. Compile & install the userspace utilities.
-	$ ./configure [--with-tcp-wrappers=no] [--with-usbids-dir=<dir>]
-	$ make install
+    sudo apt install libssl-dev libusb-1.0-dev
+    ./build_userspace
+    cd bulid
+    make
 
-    2. Compile & install USB/IP drivers.
+    sudo ./src/usbipd
+
+    ---- client ----
+    python3 client/usbipd_client.py
+
+    ---- client ----
+    sudo ./src/usbip -d --tcp-port 3241 bind -b 1-3 -r localhost
+    sudo ./src/usbip -d --tcp-port 3241 attach -b 1-3 -r localhost
 
 
 [Usage]
