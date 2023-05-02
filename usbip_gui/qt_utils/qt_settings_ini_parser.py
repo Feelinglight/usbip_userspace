@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtWidgets
+import base64
 
-from irspy.settings_ini_parser import Settings
-from irspy import utils
+from qt_utils.settings_ini_parser import Settings
 
 
 class QtSettings(Settings):
@@ -12,13 +12,13 @@ class QtSettings(Settings):
 
     def save_bytes(self, a_name: str, a_bytes: bytes):
         self.add_ini_section(QtSettings.GEOMETRY_SECTION)
-        self.settings[QtSettings.GEOMETRY_SECTION][a_name] = utils.bytes_to_base64(a_bytes)
+        self.settings[QtSettings.GEOMETRY_SECTION][a_name] = base64.b64encode(a_bytes).decode()
         self.save()
 
     def read_bytes(self, a_name: str) -> QtCore.QByteArray:
         try:
             geometry_string = self.settings[QtSettings.GEOMETRY_SECTION][a_name]
-            return QtCore.QByteArray(utils.base64_to_bytes(geometry_string))
+            return QtCore.QByteArray(base64.b64decode(geometry_string))
         except (KeyError, ValueError):
             return QtCore.QByteArray()
 

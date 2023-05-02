@@ -1,0 +1,10 @@
+20:23:13 - WARNING - Пример вывода в лог (Уровень WARNING)
+20:23:14 - INFO - Пример вывода в лог (Уровень INFO)
+20:23:15 - CRITICAL - Traceback (most recent call last):
+  File "/home/dmitry/develop/study/usbip/usbip_userspace/usbip_gui/qt_utils/helpers.py", line 34, in new_func
+    return func(*args, **kwargs)
+  File "/home/dmitry/develop/study/usbip/usbip_userspace/usbip_gui/mainwindow.py", line 67, in exception_in_slot_button_clicked
+    very_important_value = 42 / 0
+ZeroDivisionError: division by zero
+
+20:26:28 - WARNING - Пример вывода в лог (Уровень WARNING)
