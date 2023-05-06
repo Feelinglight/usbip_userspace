@@ -1,0 +1,12 @@
+[Unit]
+Wants=network-online.target
+After=network.target network-online.target
+Description=Usbipd
+
+[Service]
+Restart=always
+ExecStart=usbipd
+TimeoutSec=1
+
+[Install]
+WantedBy=multi-user.target

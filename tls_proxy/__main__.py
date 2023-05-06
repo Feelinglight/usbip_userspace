@@ -3,9 +3,7 @@ import select
 import socket
 import ssl
 
-HOST = "localhost"
 PROXY_PORT = 3241
-
 USBIP_SERVER_PORT = 3240
 
 
@@ -76,7 +74,7 @@ class MyTCPHandler(socketserver.BaseRequestHandler):
 
 def server_run():
     socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer((HOST, PROXY_PORT), MyTCPHandler) as server:
+    with socketserver.TCPServer(("localhost", PROXY_PORT), MyTCPHandler) as server:
         server.serve_forever()
 
 
