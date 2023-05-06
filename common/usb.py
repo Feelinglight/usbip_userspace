@@ -2,39 +2,13 @@ from collections import namedtuple
 from dataclasses import dataclass
 from enum import IntEnum
 from common import utils
-from typing import List, Union
+from typing import List, Union, Set
 import logging
 import fnmatch
 import re
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.addHandler(logging.NullHandler())
-
-# Ищет класс usb устройства в выводе lsusb -v
-LSUSB_CLASS_RE: re.Pattern = re.compile(r'bInterfaceClass[\s]*(?P<class_id>\d+)')
-
-# Ищет все busid в выводе usbip list
-USBIP_RE: re.Pattern = re.compile(
-    r'- busid (?P<busid>[-.\d]*) \((?P<vid>[\da-zA-Z]*):(?P<pid>[\da-zA-Z]*)\)')
-
-UsbipDevice = namedtuple('UsbipDevice', 'busid vid, pid name class_')
-
-
-class FilterRulePass(IntEnum):
-    ALLOW = 1,
-    FORBID = 2,
-
-
-class FilterRuleType(IntEnum):
-    CLASS = 1,
-    VID_PID = 2,
-
-
-@dataclass
-class UsbFilterRule:
-    pass_: FilterRulePass
-    type_: FilterRuleType
-    rule: Union[str, int]
 
 
 class UsbClass(IntEnum):
@@ -66,6 +40,33 @@ class UsbClass(IntEnum):
 _CLASS_NAME_TO_ENUM = {usb_class.name: usb_class for usb_class in UsbClass}
 
 
+@dataclass
+class UsbipDevice:
+    id_: int
+    busid: str
+    vid: str
+    pid: str
+    name: str
+    classes: List[UsbClass]
+
+
+class FilterRulePass(IntEnum):
+    ALLOW = 1,
+    FORBID = 2,
+
+
+class FilterRuleType(IntEnum):
+    CLASS = 1,
+    VID_PID = 2,
+
+
+@dataclass
+class UsbFilterRule:
+    pass_: FilterRulePass
+    type_: FilterRuleType
+    rule: Union[str, int]
+
+
 def usb_class_to_name(usb_class: UsbClass) -> str:
     return usb_class.name.lower().replace("_", " ")
 
@@ -76,26 +77,6 @@ def usb_class_from_name(name: str) -> UsbClass:
 
 def class_to_hex(usb_class: UsbClass) -> int:
     return usb_class.value()
-
-
-async def get_usb_class_by_id(vid: str, pid: str) -> UsbClass:
-    """
-    Возвращает UsbClass для USB-устройства с заданным vid:pid
-    Если не удалось получить класс для заданного устройства, возвращает None
-    """
-    _, lsusb_output, _ = await utils.async_check_output(f'lsusb -v -d {vid}:{pid}')
-
-    res = LSUSB_CLASS_RE.search(lsusb_output)
-    if res is not None:
-        class_id = res.group('class_id')
-        try:
-            return UsbClass(int(class_id))
-        except ValueError:
-            return UsbClass.UNKNOWN
-    else:
-        _LOGGER.error(f'No class id in lsusb output for device {vid}:{pid}')
-        _LOGGER.debug(f'lsusb output:\n{lsusb_output}')
-        return UsbClass.UNKNOWN
 
 
 def parse_filter_rules(filter_rules: List[str]) -> List[UsbFilterRule]:
@@ -132,9 +113,10 @@ def parse_filter_rules(filter_rules: List[str]) -> List[UsbFilterRule]:
 
 
 def match_filter_rule(usbip_dev: UsbipDevice, filter_rule: UsbFilterRule) -> bool:
-    return filter_rule.type_ == FilterRuleType.CLASS and usbip_dev.class_ == filter_rule.rule or \
-        filter_rule.type_ == FilterRuleType.VID_PID and \
-        fnmatch.fnmatch(f"{usbip_dev.vid}:{usbip_dev.pid}", filter_rule.rule)
+    if filter_rule.type_ == FilterRuleType.CLASS:
+        return UsbClass(filter_rule.rule) in usbip_dev.classes
+    else:
+        return fnmatch.fnmatch(f"{usbip_dev.vid}:{usbip_dev.pid}", filter_rule.rule)
 
 
 def filter_usb_list(usbip_devices: List[UsbipDevice], filter_rules: List[UsbFilterRule]) -> \
