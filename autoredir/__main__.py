@@ -1,19 +1,17 @@
-from typing import List, Iterable
+from typing import List
 from enum import IntEnum, auto
 import logging
 import asyncio
 import os
-import re
 
-from usbip_autoexport import config
-from usbip_autoimport.usbip_action import UsbipAction, UsbipActionAttach, UsbipActionBind
+from autoredir.usbip_action import UsbipAction, UsbipActionAttach, UsbipActionBind
+from autoredir import config
 from common import utils
 from common import usb
 
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.addHandler(logging.NullHandler())
-
 
 
 async def __do_action_many(action: UsbipAction, usb_list: List[usb.UsbipDevice], enable):
