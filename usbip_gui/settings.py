@@ -1,4 +1,4 @@
-from qt_utils.qt_settings_ini_parser import QtSettings
+from usbip_gui.qt_utils.qt_settings_ini_parser import QtSettings
 
 
 def get_ini_settings():

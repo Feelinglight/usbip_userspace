@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets
 
-from ui.py.about_dialog import Ui_about_dialog as AboutForm
-import app_info
+from usbip_gui.ui.py.about_dialog import Ui_about_dialog as AboutForm
+from usbip_gui import app_info
 
 
 class AboutDialog(QtWidgets.QDialog):

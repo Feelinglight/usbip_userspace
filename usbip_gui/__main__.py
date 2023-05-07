@@ -1,15 +1,10 @@
-from qt_utils import ui_to_py
-ui_to_py.convert_resources("./qt_utils/resources", ".")
-ui_to_py.convert_ui("./ui", "./ui/py")
-
 
 def main():
-    # Импорты здесь, чтобы ловить исключения в собранной версии программы, если они возникнут при импорте
+    # Импорты здесь, чтобы ловить исключения в собранной версии программы,
+    # если они возникнут при импорте
     import sys
-
     from PyQt5.QtWidgets import QApplication
-
-    from mainwindow import MainWindow
+    from usbip_gui.mainwindow import MainWindow
 
     app = QApplication(sys.argv)
 

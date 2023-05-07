@@ -3,14 +3,14 @@ import logging
 
 from PyQt5 import QtWidgets, QtGui
 
-from qt_utils.helpers import exception_decorator
-from qt_utils.settings_ini_parser import BadIniException
-from qt_utils.helpers import QTextEditLogger
-from about_dialog import AboutDialog
+from usbip_gui.qt_utils.helpers import exception_decorator
+from usbip_gui.qt_utils.settings_ini_parser import BadIniException
+from usbip_gui.qt_utils.helpers import QTextEditLogger
+from usbip_gui.about_dialog import AboutDialog
 
-from ui.py.mainwindow import Ui_MainWindow as MainForm
-import app_info
-import settings
+from usbip_gui.ui.py.mainwindow import Ui_MainWindow as MainForm
+from usbip_gui import app_info
+from usbip_gui import settings
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -48,9 +48,11 @@ class MainWindow(QtWidgets.QMainWindow):
         log = QTextEditLogger(self.ui.log_text_edit)
         log.setFormatter(logging.Formatter('%(asctime)s - %(message)s', datefmt='%H:%M:%S'))
 
-        file_log = RotatingFileHandler("telegram_scanner.log", maxBytes=30*1024*1024, backupCount=3, encoding='utf8')
+        file_log = RotatingFileHandler(
+            f"{app_info.NAME}.log", maxBytes=30*1024*1024, backupCount=3, encoding='utf8')
         file_log.setLevel(logging.DEBUG)
-        file_log.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%H:%M:%S'))
+        file_log.setFormatter(
+            logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', datefmt='%H:%M:%S'))
 
         logging.getLogger().addHandler(file_log)
         logging.getLogger().addHandler(log)

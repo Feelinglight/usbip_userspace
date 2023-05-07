@@ -1,4 +1,5 @@
 from typing import List, Tuple
+from pathlib import Path
 import os
 
 import PyInstaller.__main__ as pyinstaller
@@ -86,8 +87,9 @@ def build_app(a_main_filename: str, a_app_info: AppInfo, a_icon_filename: str = 
         pyinstaller_args.append("--icon={}".format(a_icon_filename))
     if a_admin:
         pyinstaller_args.append("--uac-admin")
-    for src, dst in a_libs:
-        pyinstaller_args.append("--add-data={}{}{}".format(src, os.pathsep, dst))
+    if a_libs:
+        for src, dst in a_libs:
+            pyinstaller_args.append("--add-data={}{}{}".format(src, os.pathsep, dst))
 
     version_filename = "version.txt"
     with open(version_filename, 'w', encoding="utf8") as version_file:
@@ -104,25 +106,3 @@ def build_app(a_main_filename: str, a_app_info: AppInfo, a_icon_filename: str = 
         pyinstaller.run(pyinstaller_args)
     finally:
         os.remove(version_filename)
-
-
-def build_qt_app(a_main_filename: str, a_app_info: AppInfo, a_icon_filename: str = "",
-                 a_noconsole=True, a_one_file=True, a_libs: List[Tuple[str, str]] = None):
-    """
-      Запускает сборку через pyinstaller с заданными параметрами. Перед этим удаляет из главного скрипта строки,
-      которые конвертируют ресурсы qt в python.
-      Параметры, как у build_app
-    """
-
-    tmp_filename = "{}.py".format(a_app_info.app_name)
-
-    with open(a_main_filename, encoding='utf8') as main_py:
-        with open(tmp_filename, "w", encoding='utf8') as compile_main:
-            for line in main_py:
-                if not ("ui_to_py" in line):
-                    compile_main.write(line)
-
-    try:
-        build_app(tmp_filename, a_app_info, a_icon_filename, a_noconsole, a_one_file, a_libs)
-    finally:
-        os.remove(tmp_filename)

@@ -1,2 +1,2 @@
-NAME = "app_template"
-VERSION = 1
+NAME = "usbip_gui"
+VERSION = "0.1"

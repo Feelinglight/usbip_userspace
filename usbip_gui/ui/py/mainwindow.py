@@ -66,6 +66,7 @@ class Ui_MainWindow(object):
         self.gridLayout_4.addWidget(self.logging_warning_button, 0, 1, 1, 1)
         self.some_spinbox = QtWidgets.QSpinBox(self.frame_2)
         self.some_spinbox.setMaximum(999999999)
+        self.some_spinbox.setProperty("value", 123)
         self.some_spinbox.setObjectName("some_spinbox")
         self.gridLayout_4.addWidget(self.some_spinbox, 3, 0, 1, 2)
         self.gridLayout_2.addWidget(self.mw_splitter_1, 0, 0, 1, 1)
