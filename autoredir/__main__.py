@@ -25,8 +25,7 @@ async def __do_action_many(action: UsbipAction, usb_list: List[usb.UsbipDevice],
                           f'device {dev.name} ({dev.vid}:{dev.pid})')
 
 
-async def __usbip_auto_action(action: UsbipAction, filter_rules: List[usb.UsbFilterRule],
-                              tick_period_s=0.2):
+async def __usbip_auto_action(action: UsbipAction, filter_rules: List[usb.UsbFilterRule]):
     bind_timer = utils.Timer(2)
     while True:
         # if not filter_rules:
@@ -50,7 +49,7 @@ async def __usbip_auto_action(action: UsbipAction, filter_rules: List[usb.UsbFil
 
             await __do_action_many(action, usb_list, enable=True)
 
-        await asyncio.sleep(tick_period_s)
+        await asyncio.sleep(1)
 
 
 async def usbip_cancel_all_actions(action: UsbipAction):
@@ -58,7 +57,7 @@ async def usbip_cancel_all_actions(action: UsbipAction):
     await __do_action_many(action, usb_devices, enable=False)
 
 
-async def usbip_autoredir(action: UsbipAction, filter_rules_path: str, tick_period_s=0.2):
+async def usbip_autoredir(action: UsbipAction, filter_rules_path: str):
     """
     Следит за подключением и отключением usb-устройств.
     Когда список usb-устройств меняется, пробует испортировать/экспортировать все устройства через
@@ -69,10 +68,10 @@ async def usbip_autoredir(action: UsbipAction, filter_rules_path: str, tick_peri
             filter_rules = usb.parse_filter_rules(rules_file.readlines())
     else:
         filter_rules = []
-        _LOGGER.warning(f"Файл с правилами фильтрации не найден. Автоматический"
+        _LOGGER.warning(f"Файл с правилами фильтрации не найден. Автоматический "
                         f"{action.name().lower()} устройств будет отключен.")
     try:
-        await __usbip_auto_action(action, filter_rules, tick_period_s)
+        await __usbip_auto_action(action, filter_rules)
     except asyncio.CancelledError:
         _LOGGER.info(f"{usbip_autoredir.__name__} завершен")
 

@@ -33,7 +33,8 @@ class UsbClass(IntEnum):
     DIAGNOSTIC = 0xDC,
     WIRELESS = 0xE0,
     MISC = 0xEF,
-    VENDOR_SPEC = 0xFE,
+    APP_SPEC = 0xFE,
+    VENDOR_SPEC = 0xFF
     UNKNOWN = 0xFFFF
 
 
@@ -130,5 +131,4 @@ def filter_usb_list(usbip_devices: List[UsbipDevice], filter_rules: List[UsbFilt
                 else:
                     _LOGGER.info(f"Device {dev} filtered")
                 break
-
     return allowed_devs
