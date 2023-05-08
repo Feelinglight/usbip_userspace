@@ -7,4 +7,6 @@ __pycache__/
 /debian/.debhelper/
 /debian/usbip-server
 /debian/usbip-server*
+/debian/usbip-client
+/debian/usbip-client*
 /debian/files

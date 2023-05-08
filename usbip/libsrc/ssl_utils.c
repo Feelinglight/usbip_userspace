@@ -33,9 +33,9 @@ SSL* wrap_server_connection(int sockfd)
     int use_key;
 
     use_cert = SSL_CTX_use_certificate_file(
-        ssl_context, "/home/ubuntu/python_tests/ca/ca.pem" , SSL_FILETYPE_PEM);
+        ssl_context, "/etc/ssl/certs/usbip.pem" , SSL_FILETYPE_PEM);
     use_key = SSL_CTX_use_PrivateKey_file(
-        ssl_context, "/home/ubuntu/python_tests/ca/ca.key", SSL_FILETYPE_PEM);
+        ssl_context, "/etc/ssl/private/usbip.key", SSL_FILETYPE_PEM);
 
     if (!use_cert || !use_key) {
         err("Cant use ca files, use_cert: %d, use_key: %d", use_cert, use_key);
