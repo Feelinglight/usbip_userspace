@@ -1,15 +1,12 @@
-Source: calc
+Source: usbip_server
 Section: unknown
 Priority: optional
 Maintainer: feelinglight <kolpacc123@mail.ru>
 Build-Depends: debhelper (>= 9~)
 Standards-Version: 3.9.8.0
 Homepage: <insert the upstream URL, if relevant>
-#Vcs-Browser: https://salsa.debian.org/debian/calc
-#Vcs-Git: https://salsa.debian.org/debian/calc.git
 
-Package: calc
+Package: usbip_server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: calculator
- pyqt5 calculator
+Description: usbip_server
