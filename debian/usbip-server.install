@@ -6,3 +6,4 @@ services/usbip_autoexport.service etc/systemd/system
 
 ./usbip/build/src/usbipd2 usr/bin
 services/usbipd2.service etc/systemd/system
+./configs/defaults/tls.ini etc/usbip2
