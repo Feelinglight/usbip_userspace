@@ -10,3 +10,8 @@ Package: usbip-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: usbip server
+
+Package: usbip-client
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: usbip client

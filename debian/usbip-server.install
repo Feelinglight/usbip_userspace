@@ -1,8 +1,8 @@
-dist/usbip_gui usr/bin
-dist/autoredir usr/bin
-tls_proxy/tls_proxy.py usr/bin
+./usbip/build/src/usbip2 usr/bin
 
-services/tls_proxy.service etc/systemd/system
+dist/autoredir usr/bin
 services/usbip_autoexport.service etc/systemd/system
-services/usbip_autoimport.service etc/systemd/system
+./configs/defaults/filters etc/usbip2
+
+./usbip/build/src/usbipd2 usr/bin
 services/usbipd2.service etc/systemd/system
