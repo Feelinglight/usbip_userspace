@@ -3,8 +3,7 @@ Description=Autoexport usb devices with usbip
 
 [Service]
 Restart=always
-ExecStart=/usr/local/bin/usbip_autoexport.py start
-ExecStopPost=/usr/local/bin/usbip_autoexport.py unbind
+ExecStart=autoredir -d autoattach
 RestartSec=5
 
 [Install]

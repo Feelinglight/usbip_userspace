@@ -1,12 +1,10 @@
 [Unit]
-Wants=network-online.target
-After=network.target network-online.target
-Description=Usbipd
+Description=Tls proxy for usbip server connection
 
 [Service]
 Restart=always
-ExecStart=usbipd
-TimeoutSec=1
+ExecStart=python3 -m /usr/bin/tls_proxy.py
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

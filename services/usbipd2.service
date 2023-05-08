@@ -5,7 +5,7 @@ Description=Usbipd
 
 [Service]
 Restart=always
-ExecStart=usbipd
+ExecStart=usbipd2
 TimeoutSec=1
 
 [Install]
