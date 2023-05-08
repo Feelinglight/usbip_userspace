@@ -1,3 +1,6 @@
+cur_dir=$(pwd)
+
+cd usbip
 rm -rf build
 mkdir -p build
 cd build
@@ -10,4 +13,4 @@ autoreconf --install --force --verbose  "${PROJECT_DIR:-..}" 2>&1
 make
 cp config.h ..
 
-cd ..
+cd "$cur_dir"

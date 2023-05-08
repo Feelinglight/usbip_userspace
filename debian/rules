@@ -24,12 +24,11 @@
 #	dh_auto_configure -- #	-DCMAKE_LIBRARY_PATH=$(DEB_HOST_MULTIARCH)
 
 build:
-	python3 ./build_python_apps.py
-	cd usbip
-	./build_userspace.sh
-	mv ./build/src/usbip ./build/src/usbip2
-	mv ./build/src/usbipd ./build/src/usbipd2
+	# python3 ./build_python_apps.py
+	# ./build_usbip.sh
+	# mv ./build/src/usbip ./build/src/usbip2
+	# mv ./build/src/usbipd ./build/src/usbipd2
 
 clean:
 	dh_clean
-	./clean.sh
+	# ./clean.sh
