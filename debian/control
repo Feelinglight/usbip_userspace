@@ -1,4 +1,4 @@
-Source: usbip_server
+Source: usbip-server
 Section: unknown
 Priority: optional
 Maintainer: feelinglight <kolpacc123@mail.ru>
@@ -6,7 +6,7 @@ Build-Depends: debhelper (>= 9~)
 Standards-Version: 3.9.8.0
 Homepage: <insert the upstream URL, if relevant>
 
-Package: usbip_server
+Package: usbip-server
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: usbip_server
+Description: usbip server

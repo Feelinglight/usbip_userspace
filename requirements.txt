@@ -6,4 +6,4 @@ pyinstaller
 
 # sudo apt update
 # sudo apt full-upgrade
-# sudo apt install -y autoconf make gcc libudev-dev libusb-1.0.0-dev libssl-dev libtool
+# sudo apt install -y python3-pip qt5-default dh-make autoconf make gcc libudev-dev libusb-1.0.0-dev libssl-dev libtool
