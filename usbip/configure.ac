@@ -13,7 +13,6 @@ AC_CONFIG_SRCDIR([src/usbipd.c])
 AC_CONFIG_HEADERS([config.h])
 
 AM_INIT_AUTOMAKE([foreign])
-LT_INIT
 
 # Silent build for automake >= 1.11
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
@@ -24,6 +23,8 @@ AC_SUBST([EXTRA_CFLAGS], ["-Wall -Werror -Wextra -std=gnu99"])
 AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
+
+AC_PROG_RANLIB
 
 # Checks for header files.
 AC_HEADER_DIRENT
@@ -81,9 +82,15 @@ AC_CHECK_HEADER(
 	[AC_CHECK_LIB(
 		[ssl],
 		[OPENSSL_init_ssl],
-		[LIBS="$LIBS -lssl"],
+		[LIBS="$LIBS -lssl -lcrypto"],
 		[AC_MSG_ERROR([libssl library not found])])],
 	[AC_MSG_ERROR([No libssl/ssl.h header])])
+
+AC_CHECK_LIB(
+		[pthread],
+		[pthread_join],
+		[LIBS="$LIBS -lpthread"],
+		[AC_MSG_ERROR([libpthread library not found])])
 
 # Checks for libwrap library.
 AC_MSG_CHECKING([whether to use the libwrap (TCP wrappers) library])

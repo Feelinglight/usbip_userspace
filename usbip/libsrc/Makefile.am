@@ -3,8 +3,8 @@ libusbip_la_CPPFLAGS = -DUSBIDS_FILE='"@USBIDS_DIR@/usb.ids"'
 libusbip_la_CFLAGS   = @EXTRA_CFLAGS@
 libusbip_la_LDFLAGS  = -version-info @LIBUSBIP_VERSION@
 
-lib_LTLIBRARIES := libusbip.la
-libusbip_la_SOURCES := names.c names.h usbip_host_driver.c \
+lib_LIBRARIES = libusbip.la
+libusbip_la_SOURCES = names.c names.h usbip_host_driver.c \
 			   usbip_host_userspace/usbip_host_driver_userspace.c \
 			   usbip_host_userspace/stub_logging.c usbip_host_userspace/stub_event.c \
 			   usbip_host_userspace/stub_rx.c usbip_host_userspace/stub_common.c\

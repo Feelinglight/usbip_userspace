@@ -3,7 +3,7 @@ Description=Autoexport usb devices with usbip
 
 [Service]
 Restart=always
-ExecStart=autoredir -d autoattach
+ExecStart=autoredir -d autobind
 RestartSec=5
 
 [Install]

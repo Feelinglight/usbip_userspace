@@ -16,7 +16,7 @@ _LOGGER.addHandler(logging.NullHandler())
 
 class UsbipAction(abc.ABC):
 
-    USBIP_CMD = 'usbip'
+    USBIP_CMD = 'usbip2'
 
     class AutoAction(IntEnum):
         BIND = auto()
