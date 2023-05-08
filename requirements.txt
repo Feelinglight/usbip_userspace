@@ -3,3 +3,7 @@ PyQt5-sip
 PyQt5-stubs
 qt5-tools
 pyinstaller
+
+# sudo apt update
+# sudo apt full-upgrade
+# sudo apt install -y autoconf make gcc libudev-dev libusb-1.0.0-dev libssl-dev libtool
