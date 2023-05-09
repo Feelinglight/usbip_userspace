@@ -1,5 +1,10 @@
 <RCC>
   <qresource prefix="icons">
+    <file>icons/enable.png</file>
+    <file>icons/disable.png</file>
+    <file>icons/filters.png</file>
+    <file>icons/add_server.png</file>
+    <file>icons/remove_server.png</file>
     <file>icons/lan.ico</file>
     <file>icons/update.png</file>
     <file>icons/medal.png</file>
@@ -61,21 +66,5 @@
     <file>icons/settings.png</file>
     <file>icons/warning.png</file>
     <file>icons/log_file.png</file>
-  </qresource>
-  <qresource prefix="images">
-    <file>images/just_for_fun.png</file>
-  </qresource>
-  <qresource prefix="scheme">
-    <file>icons/scheme/coil_001.png</file>
-    <file>icons/scheme/coil_1.png</file>
-    <file>icons/scheme/coil_10.png</file>
-    <file>icons/scheme/div_40.png</file>
-    <file>icons/scheme/div_55.png</file>
-    <file>icons/scheme/div_200.png</file>
-    <file>icons/scheme/div_350.png</file>
-    <file>icons/scheme/div_500.png</file>
-    <file>icons/scheme/div_650.png</file>
-    <file>icons/scheme/mul_10.png</file>
-    <file>icons/scheme/mul_30.png</file>
   </qresource>
 </RCC>

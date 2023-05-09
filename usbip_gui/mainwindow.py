@@ -7,6 +7,8 @@ from usbip_gui.qt_utils.helpers import exception_decorator
 from usbip_gui.qt_utils.settings_ini_parser import BadIniException
 from usbip_gui.qt_utils.helpers import QTextEditLogger
 from usbip_gui.about_dialog import AboutDialog
+from usbip_gui.edit_filters_dialog import EditFiltersDialog
+from usbip_gui.add_server_dialog import AddServerDialog
 
 from usbip_gui.ui.py.mainwindow import Ui_MainWindow as MainForm
 from usbip_gui import app_info
@@ -30,16 +32,13 @@ class MainWindow(QtWidgets.QMainWindow):
             self.close()
         else:
             self.settings.restore_qwidget_state(self)
-            self.settings.restore_qwidget_state(self.ui.mw_splitter_1)
+            self.settings.restore_qwidget_state(self.ui.splitter)
 
             self.set_up_logger()
 
-            self.ui.some_spinbox.setValue(self.settings.some_int)
-
-            self.ui.logging_info_button.clicked.connect(self.logging_info_button_clicked)
-            self.ui.logging_warning_button.clicked.connect(self.logging_warning_button_clicked)
-            self.ui.exception_in_slot_button.clicked.connect(self.exception_in_slot_button_clicked)
-            self.ui.some_spinbox.editingFinished.connect(self.some_spinbox_value_changed)
+            self.ui.add_server_action.triggered.connect(self.open_add_server_dialog)
+            self.ui.remove_server_action.triggered.connect(self.remove_selected_server)
+            self.ui.filters_action.triggered.connect(self.open_common_filters)
             self.ui.about_action.triggered.connect(self.open_about)
 
             self.show()
@@ -58,23 +57,19 @@ class MainWindow(QtWidgets.QMainWindow):
         logging.getLogger().addHandler(log)
         logging.getLogger().setLevel(logging.INFO)
 
-    def logging_info_button_clicked(self):
-        logging.info("Пример вывода в лог (Уровень INFO)")
+    def open_add_server_dialog(self):
+        AddServerDialog().exec()
 
-    def logging_warning_button_clicked(self):
-        logging.warning("Пример вывода в лог (Уровень WARNING)")
+    def remove_selected_server(self):
+        pass
 
-    @exception_decorator
-    def exception_in_slot_button_clicked(self, _):
-        very_important_value = 42 / 0
-
-    def some_spinbox_value_changed(self):
-        self.settings.some_int = self.ui.some_spinbox.value()
+    def open_common_filters(self):
+        EditFiltersDialog("Общие фильтры").exec()
 
     def open_about(self):
         AboutDialog().exec()
 
     def closeEvent(self, a_event: QtGui.QCloseEvent):
-        self.settings.save_qwidget_state(self.ui.mw_splitter_1)
+        self.settings.save_qwidget_state(self.ui.splitter)
         self.settings.save_qwidget_state(self)
         a_event.accept()

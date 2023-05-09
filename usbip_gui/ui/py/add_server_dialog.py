@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'about_dialog.ui'
+# Form implementation generated from reading ui file 'add_server_dialog.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.9
 #
@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_about_dialog(object):
     def setupUi(self, about_dialog):
         about_dialog.setObjectName("about_dialog")
-        about_dialog.resize(276, 136)
+        about_dialog.resize(276, 114)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -28,6 +28,7 @@ class Ui_about_dialog(object):
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout(about_dialog)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.verticalLayout.setSpacing(6)
         self.verticalLayout.setObjectName("verticalLayout")
         self.frame = QtWidgets.QFrame(about_dialog)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
@@ -35,38 +36,33 @@ class Ui_about_dialog(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.frame.sizePolicy().hasHeightForWidth())
         self.frame.setSizePolicy(sizePolicy)
-        self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame.setFrameShape(QtWidgets.QFrame.NoFrame)
         self.frame.setFrameShadow(QtWidgets.QFrame.Plain)
         self.frame.setObjectName("frame")
         self.gridLayout = QtWidgets.QGridLayout(self.frame)
+        self.gridLayout.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout.setSpacing(3)
         self.gridLayout.setObjectName("gridLayout")
+        self.server_name_edit = QtWidgets.QLineEdit(self.frame)
+        self.server_name_edit.setObjectName("server_name_edit")
+        self.gridLayout.addWidget(self.server_name_edit, 0, 1, 1, 1)
+        self.label = QtWidgets.QLabel(self.frame)
+        self.label.setObjectName("label")
+        self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
         self.label_2 = QtWidgets.QLabel(self.frame)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.label_2.sizePolicy().hasHeightForWidth())
-        self.label_2.setSizePolicy(sizePolicy)
-        self.label_2.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
-        self.label_2.setWordWrap(True)
         self.label_2.setObjectName("label_2")
         self.gridLayout.addWidget(self.label_2, 1, 0, 1, 1)
-        self.version_label = QtWidgets.QLabel(self.frame)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.version_label.sizePolicy().hasHeightForWidth())
-        self.version_label.setSizePolicy(sizePolicy)
-        self.version_label.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
-        self.version_label.setObjectName("version_label")
-        self.gridLayout.addWidget(self.version_label, 2, 0, 1, 1)
-        self.label_3 = QtWidgets.QLabel(self.frame)
-        self.label_3.setObjectName("label_3")
-        self.gridLayout.addWidget(self.label_3, 0, 0, 1, 1)
+        self.server_address_edit = QtWidgets.QLineEdit(self.frame)
+        self.server_address_edit.setObjectName("server_address_edit")
+        self.gridLayout.addWidget(self.server_address_edit, 1, 1, 1, 1)
         self.verticalLayout.addWidget(self.frame)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
+        self.ok_button = QtWidgets.QPushButton(about_dialog)
+        self.ok_button.setObjectName("ok_button")
+        self.horizontalLayout.addWidget(self.ok_button)
         self.close_button = QtWidgets.QPushButton(about_dialog)
         self.close_button.setObjectName("close_button")
         self.horizontalLayout.addWidget(self.close_button)
@@ -78,9 +74,9 @@ class Ui_about_dialog(object):
 
     def retranslateUi(self, about_dialog):
         _translate = QtCore.QCoreApplication.translate
-        about_dialog.setWindowTitle(_translate("about_dialog", "О программе"))
-        self.label_2.setText(_translate("about_dialog", "Графический интерфейс USBIP"))
-        self.version_label.setText(_translate("about_dialog", "Версия программы: "))
-        self.label_3.setText(_translate("about_dialog", "USBIP GUI"))
-        self.close_button.setText(_translate("about_dialog", "Закрыть"))
+        about_dialog.setWindowTitle(_translate("about_dialog", "Добавить сервер"))
+        self.label.setText(_translate("about_dialog", "Имя сервера"))
+        self.label_2.setText(_translate("about_dialog", "Адрес"))
+        self.ok_button.setText(_translate("about_dialog", "Ок"))
+        self.close_button.setText(_translate("about_dialog", "Отмена"))
 import icons
