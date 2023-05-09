@@ -1,0 +1,10 @@
+[Unit]
+Description=Autoimport usb devices with usbip
+
+[Service]
+Restart=always
+ExecStart=autoredir -d autoattach
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

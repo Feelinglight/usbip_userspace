@@ -1,0 +1,11 @@
+./usbip/build/src/usbip2 usr/bin
+
+dist/autoredir usr/bin
+services/usbip_autoimport.service etc/systemd/system
+./configs/defaults/filters etc/usbip2
+./configs/defaults/settings.ini etc/usbip2
+
+dist/usbip_gui usr/bin
+
+tls_proxy/tls_proxy.py usr/bin
+services/tls_proxy.service etc/systemd/system
