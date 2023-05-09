@@ -3,7 +3,7 @@ Description=Tls proxy for usbip server connection
 
 [Service]
 Restart=always
-ExecStart=python3 -m /usr/bin/tls_proxy.py
+ExecStart=python3 /usr/bin/tls_proxy.py
 RestartSec=5
 
 [Install]

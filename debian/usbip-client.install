@@ -3,6 +3,7 @@
 dist/autoredir usr/bin
 services/usbip_autoimport.service etc/systemd/system
 ./configs/defaults/filters etc/usbip2
+./configs/defaults/settings.ini etc/usbip2
 
 dist/usbip_gui usr/bin
 
