@@ -10,27 +10,27 @@ if ! getent passwd usbip >/dev/null; then
         usbip >/dev/null
 fi
 
-echo "Please set password for usbip user in order to clients could import devices"
-
 openssl genrsa -out usbip_ca.key 2048
-openssl req -new -sha256 -x509 -days 3650 -key usbip_ca.key -out usbip_ca.crt
+openssl req -batch -new -sha256 -x509 -days 3650 -key usbip_ca.key -out usbip_ca.crt
 openssl x509 -in usbip_ca.crt -out usbip_ca.pem -outform PEM
 
-mv usbip_ca.pem /etc/ssl/certs/
-mv usbip_ca.key /etc/ssl/private/
-
 openssl genrsa -out usbip.key 2048
-openssl req -new -key usbip.key -out usbip.csr
+openssl req -batch -new -key usbip.key -out usbip.csr
 openssl x509 -req -sha256 -days 3650 -in usbip.csr -CA usbip_ca.crt -CAkey usbip_ca.key -set_serial 02 -out usbip.crt
 cat usbip.key usbip.crt > usbip.pem
 
 mv usbip.pem /etc/ssl/certs/
 mv usbip.key /etc/ssl/private/
 
+mv usbip_ca.pem /etc/ssl/certs/
+mv usbip_ca.key /etc/ssl/private/
+
 systemctl enable usbipd2.service
-systemctl enable usbipd_autoexport.service
+systemctl enable usbip_autoexport.service
 
 systemctl daemon-reload
 
 systemctl start usbipd2.service
-systemctl start usbipd_autoexport.service
+systemctl start usbip_autoexport.service
+
+echo "Please set password for usbip user in order to clients could import devices"

@@ -8,10 +8,10 @@ Homepage: <insert the upstream URL, if relevant>
 
 Package: usbip-server
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ssh, openssl
+Depends: ${shlibs:Depends}, ${misc:Depends}, ssh, openssl, hwdata
 Description: usbip server
 
 Package: usbip-client
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, hwdata
 Description: usbip client
