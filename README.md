@@ -15,14 +15,10 @@ Also includes:
 
 USBIP server implementation with libusb and tls connection.
 
-## usbip_service_server
+## autoredir
 
-Server service for auto device export
-
-## usbip_service_client
-
-Client service for device import and TLS proxy
+Client/Server service for auto device import/export
 
 ## usbip_gui
 
-Client GUI for service control
+Client GUI for autoredir service control
