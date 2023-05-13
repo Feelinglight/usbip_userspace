@@ -1,0 +1,264 @@
+16:16:20 - ERROR - startup error
+16:16:39 - DEBUG - startup
+16:16:39 - ERROR - startup error
+16:16:53 - DEBUG - Server UsbipServer(name='localhost', address='localhost', available=False, devices=[], filters=[]) added
+17:47:56 - INFO - Remove server 
+17:49:02 - INFO - Remove server 
+17:49:02 - WARNING - Сервер  не найден
+17:49:14 - DEBUG - Server UsbipServer(name='sfwe', address='3124r', available=False, devices=[], filters=[]) added
+17:49:29 - DEBUG - Server UsbipServer(name='фвйфцв', address='цуйафуца', available=False, devices=[], filters=[]) added
+17:51:40 - DEBUG - Server UsbipServer(name='ына', address='л гнцуиал', available=False, devices=[], filters=[]) added
+18:00:10 - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:00:10 - WARNING - Не удалось получить список устройств с сервера google.com
+18:00:18 - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:00:18 - WARNING - Не удалось получить список устройств с сервера google.com
+18:00:18 - DEBUG - Filter rules:
+
+18:00:41 - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:00:41 - WARNING - Не удалось получить список устройств с сервера google.com
+18:00:41 - DEBUG - Filter rules:
+
+18:01:07 - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:01:07 - WARNING - Не удалось получить список устройств с сервера google.com
+18:01:07 - DEBUG - Filter rules:
+
+18:01:13 - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:01:13 - WARNING - Не удалось получить список устройств с сервера google.com
+18:01:13 - DEBUG - Filter rules:
+
+18:01:18 - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:01:18 - WARNING - Не удалось получить список устройств с сервера google.com
+18:01:18 - DEBUG - Filter rules:
+
+18:01:21 - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:01:21 - WARNING - Не удалось получить список устройств с сервера google.com
+18:01:21 - DEBUG - Filter rules:
+
+18:01:26 - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:01:26 - WARNING - Не удалось получить список устройств с сервера google.com
+18:01:26 - DEBUG - Filter rules:
+
+18:01:31 - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:01:31 - WARNING - Не удалось получить список устройств с сервера google.com
+18:01:31 - DEBUG - Filter rules:
+
+18:01:36 - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:01:36 - WARNING - Не удалось получить список устройств с сервера google.com
+18:01:36 - DEBUG - Filter rules:
+
+18:01:41 - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:01:41 - WARNING - Не удалось получить список устройств с сервера google.com
+18:01:41 - DEBUG - Filter rules:
+
+18:01:46 - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:01:46 - WARNING - Не удалось получить список устройств с сервера google.com
+18:01:46 - DEBUG - Filter rules:
+
+18:01:51 - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:01:51 - WARNING - Не удалось получить список устройств с сервера google.com
+18:01:51 - DEBUG - Filter rules:
+
+18:01:56 - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:01:56 - WARNING - Не удалось получить список устройств с сервера google.com
+18:01:56 - DEBUG - Filter rules:
+
+18:02:01 - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:02:01 - WARNING - Не удалось получить список устройств с сервера google.com
+18:02:01 - DEBUG - Filter rules:
+
+18:02:05 - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:02:05 - WARNING - Не удалось получить список устройств с сервера google.com
+18:02:05 - DEBUG - Filter rules:
+
+18:03:49 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:03:49 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:03:49 - usb - DEBUG - Filter rules:
+
+18:03:54 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:03:54 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:03:54 - usb - DEBUG - Filter rules:
+
+18:04:09 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:04:09 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:04:09 - usb - DEBUG - Filter rules:
+
+18:04:14 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:04:14 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:04:14 - usb - DEBUG - Filter rules:
+
+18:04:18 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:04:18 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:04:18 - usb - DEBUG - Filter rules:
+
+18:04:23 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:04:23 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:04:23 - usb - DEBUG - Filter rules:
+
+18:06:22 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:06:22 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:06:22 - usb - DEBUG - Filter rules:
+
+18:06:48 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:06:48 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:06:48 - usb - DEBUG - Filter rules:
+
+18:07:43 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:07:43 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:07:43 - usb - DEBUG - Filter rules:
+
+18:07:48 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:07:48 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:07:48 - usb - DEBUG - Filter rules:
+
+18:07:53 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:07:53 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:07:53 - usb - DEBUG - Filter rules:
+
+18:07:59 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:07:59 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:07:59 - usb - DEBUG - Filter rules:
+
+18:08:04 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:08:04 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:08:04 - usb - DEBUG - Filter rules:
+
+18:08:09 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:08:09 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:08:09 - usb - DEBUG - Filter rules:
+
+18:08:20 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:08:20 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:08:20 - usb - DEBUG - Filter rules:
+
+18:08:25 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:08:25 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:08:25 - usb - DEBUG - Filter rules:
+
+18:08:30 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:08:30 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:08:30 - usb - DEBUG - Filter rules:
+
+18:08:34 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:08:34 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:08:34 - usb - DEBUG - Filter rules:
+
+18:08:34 - usb - DEBUG - Filter rules:
+
+18:08:34 - servers_manager - DEBUG - Server UsbipServer(name='localhost', address='localhost', available=False, devices=[], filters=[]) added
+18:08:35 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:08:35 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:08:35 - usb - DEBUG - Filter rules:
+
+18:08:36 - usb - DEBUG - Filter rules:
+
+18:08:41 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:08:41 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:08:41 - usb - DEBUG - Filter rules:
+
+18:08:41 - usb - DEBUG - Filter rules:
+
+18:08:46 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:08:46 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:08:46 - usb - DEBUG - Filter rules:
+
+18:08:46 - usb - DEBUG - Filter rules:
+
+18:08:51 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:08:51 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:08:51 - usb - DEBUG - Filter rules:
+
+18:08:51 - usb - DEBUG - Filter rules:
+
+18:08:59 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:08:59 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:08:59 - usb - DEBUG - Filter rules:
+
+18:09:00 - usb - DEBUG - Filter rules:
+
+18:09:05 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:09:05 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:09:05 - usb - DEBUG - Filter rules:
+
+18:09:05 - usb - DEBUG - Filter rules:
+
+18:09:10 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:09:10 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:09:10 - usb - DEBUG - Filter rules:
+
+18:09:10 - usb - DEBUG - Filter rules:
+
+18:09:15 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:09:15 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:09:15 - usb - DEBUG - Filter rules:
+
+18:09:15 - usb - DEBUG - Filter rules:
+
+18:09:20 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:09:20 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:09:20 - usb - DEBUG - Filter rules:
+
+18:09:20 - usb - DEBUG - Filter rules:
+
+18:09:25 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:09:25 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:09:25 - usb - DEBUG - Filter rules:
+
+18:09:25 - usb - DEBUG - Filter rules:
+
+18:09:30 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:09:30 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:09:30 - usb - DEBUG - Filter rules:
+
+18:09:30 - usb - DEBUG - Filter rules:
+
+18:09:35 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:09:35 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:09:35 - usb - DEBUG - Filter rules:
+
+18:09:35 - usb - DEBUG - Filter rules:
+
+18:09:40 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:09:40 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:09:40 - usb - DEBUG - Filter rules:
+
+18:09:40 - usb - DEBUG - Filter rules:
+
+18:09:45 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:09:45 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:09:45 - usb - DEBUG - Filter rules:
+
+18:09:45 - usb - DEBUG - Filter rules:
+
+18:09:50 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:09:50 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:09:50 - usb - DEBUG - Filter rules:
+
+18:09:50 - usb - DEBUG - Filter rules:
+
+18:10:49 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:10:49 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:10:49 - usb - DEBUG - Filter rules:
+
+18:10:49 - usb - DEBUG - Filter rules:
+
+18:10:49 - mainwindow - DEBUG - Данные о серверах изменились:
+18:10:49 - mainwindow - DEBUG - UsbipServer(name='google.com', address='google.com', available=False, devices=[], filters=[])
+18:10:49 - mainwindow - DEBUG - UsbipServer(name='localhost', address='localhost', available=True, devices=[UsbipDevice(id_=0, busid='3-2', vid='09da', pid='2696', name='A4Tech Co., Ltd. : unknown product', classes=[<UsbClass.MISC: 239>])], filters=[])
+18:10:54 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:10:54 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:10:54 - usb - DEBUG - Filter rules:
+
+18:10:54 - usb - DEBUG - Filter rules:
+
+18:10:59 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:10:59 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:10:59 - usb - DEBUG - Filter rules:
+
+18:10:59 - usb - DEBUG - Filter rules:
+
+18:11:04 - servers_manager - WARNING - Команда 'usbip list -r google.com' завершена по таймауту
+18:11:04 - servers_manager - WARNING - Не удалось получить список устройств с сервера google.com
+18:11:04 - usb - DEBUG - Filter rules:
+
+18:11:04 - usb - DEBUG - Filter rules:
+

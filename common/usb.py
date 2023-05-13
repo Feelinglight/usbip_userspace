@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from enum import IntEnum
 from common import utils
 from typing import List, Union, Set
+from common import usb
 import logging
 import fnmatch
 import re
@@ -111,6 +112,16 @@ def parse_filter_rules(filter_rules: List[str]) -> List[UsbFilterRule]:
     _LOGGER.debug("Filter rules:\n{}".format('\n'.join(map(str, rules))))
 
     return rules
+
+
+def filter_rules_to_str(filter_rules: List[UsbFilterRule]) -> List[str]:
+    filter_strs = []
+    for rule in filter_rules:
+        sign = '+' if rule.pass_ == FilterRulePass.ALLOW else '-'
+        rule_str = rule.rule if rule.type_ == FilterRuleType.VID_PID else \
+            usb_class_to_name(UsbClass(rule.rule))
+        filter_strs.append(f"{sign} {rule_str}")
+    return filter_strs
 
 
 def match_filter_rule(usbip_dev: UsbipDevice, filter_rule: UsbFilterRule) -> bool:

@@ -30,6 +30,9 @@ class Ui_edit_filters_dialog(object):
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
+        self.filters_title_label = QtWidgets.QLabel(edit_filters_dialog)
+        self.filters_title_label.setObjectName("filters_title_label")
+        self.verticalLayout.addWidget(self.filters_title_label)
         self.frame = QtWidgets.QFrame(edit_filters_dialog)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -106,6 +109,7 @@ class Ui_edit_filters_dialog(object):
     def retranslateUi(self, edit_filters_dialog):
         _translate = QtCore.QCoreApplication.translate
         edit_filters_dialog.setWindowTitle(_translate("edit_filters_dialog", "Фильтры"))
+        self.filters_title_label.setText(_translate("edit_filters_dialog", "Фильтры"))
         item = self.filters_list_table.horizontalHeaderItem(0)
         item.setText(_translate("edit_filters_dialog", "Фильтры"))
         self.ok_button.setText(_translate("edit_filters_dialog", "Ок"))

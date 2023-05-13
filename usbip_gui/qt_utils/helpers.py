@@ -187,6 +187,11 @@ def unwrap_from_layout(a_widget: QtWidgets.QWidget):
     return a_widget.layout().itemAt(0).widget()
 
 
+def show_error(parent: QtWidgets.QWidget, message: str):
+    QtWidgets.QMessageBox.critical(parent, "Ошибка", message, QtWidgets.QMessageBox.Ok,
+                                   QtWidgets.QMessageBox.Ok)
+
+
 def open_or_activate_dialog(a_dialog_object_name: str, a_dialog_parent, a_dialog: QtWidgets.QDialog, *args, **kwargs):
     """
     Проверяет, открыт ли диалог с заданным именем, если не открыт, то открывает его, иначе просто активирует
