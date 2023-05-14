@@ -91,8 +91,23 @@
             <property name="frameShape">
              <enum>QFrame::StyledPanel</enum>
             </property>
+            <property name="dragEnabled">
+             <bool>true</bool>
+            </property>
+            <property name="dragDropOverwriteMode">
+             <bool>false</bool>
+            </property>
             <property name="dragDropMode">
-             <enum>QAbstractItemView::DragDrop</enum>
+             <enum>QAbstractItemView::InternalMove</enum>
+            </property>
+            <property name="defaultDropAction">
+             <enum>Qt::MoveAction</enum>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::SingleSelection</enum>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
             </property>
             <property name="gridStyle">
              <enum>Qt::SolidLine</enum>

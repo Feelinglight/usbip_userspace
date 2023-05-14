@@ -7,7 +7,6 @@ def main():
     from usbip_gui.mainwindow import MainWindow
 
     app = QApplication(sys.argv)
-
     w = MainWindow()
     sys.exit(app.exec())
 

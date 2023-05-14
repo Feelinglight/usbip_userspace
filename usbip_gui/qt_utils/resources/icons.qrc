@@ -1,5 +1,20 @@
 <RCC>
   <qresource prefix="icons">
+    <file>icons/usb_gray.png</file>
+    <file>icons/audio_gray.png</file>
+    <file>icons/bluetooth_gray.png</file>
+    <file>icons/camera_gray.png</file>
+    <file>icons/hid_gray.png</file>
+    <file>icons/flashdrive_gray.png</file>
+    <file>icons/server_offline.png</file>
+    <file>icons/server_online.png</file>
+    <file>icons/flashdrive.png</file>
+    <file>icons/audio.png</file>
+    <file>icons/usb.png</file>
+    <file>icons/hid.png</file>
+    <file>icons/server.png</file>
+    <file>icons/bluetooth.png</file>
+    <file>icons/camera.png</file>
     <file>icons/enable.png</file>
     <file>icons/disable.png</file>
     <file>icons/filters.png</file>

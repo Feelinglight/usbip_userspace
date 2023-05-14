@@ -18,7 +18,7 @@ class UsbipServer:
     name: str
     address: str
     available: bool
-    devices: List[UsbipDevice]
+    devices: List[Tuple[UsbipDevice, bool]]
     filters: List[UsbFilterRule]
 
 
@@ -41,6 +41,7 @@ def run_cmd(cmd, log_errors=True, timeout=0.3) -> Tuple[bool, str]:
     return True, stdout
 
 
+# TODO: Перенести в службу
 class ServersManager:
     SERVERS_FILE = "./usbip_servers.ini"
 
@@ -126,6 +127,10 @@ class ServersManager:
 
         return devs
 
+    def __is_device_attached(self, device: UsbipDevice):
+        import random
+        return bool(random.randint(0, 1))
+
     def __update_servers(self):
         self.config.read(ServersManager.SERVERS_FILE)
         server_names = json.loads(self.config["main"]["servers"])
@@ -139,12 +144,14 @@ class ServersManager:
                 logging.warning(f"Не удалось получить список устройств с сервера {server_address}")
 
             filter_rules = json.loads(self.config[srv_name]['filters'])
+            devices = self.__parse_usbip_list_output(stdout, 0) if res else []
+            devices = list(map(lambda dev: (dev, self.__is_device_attached(dev)), devices))
 
             self.servers[srv_name] = UsbipServer(
                 name=srv_name,
                 address=server_address,
                 available=res,
-                devices=self.__parse_usbip_list_output(stdout, 0) if res else [],
+                devices=devices,
                 filters=usb.parse_filter_rules(filter_rules),
             )
 
@@ -163,6 +170,13 @@ class ServersManager:
         self.__save_server(server)
         logging.debug(f"Server {server} added")
         return True, ""
+
+    def get_server_filters(self, server_name: Optional[str]) -> List[UsbFilterRule]:
+        if server_name is not None:
+            return self.servers[server_name].filters
+        else:
+            filters_str = json.loads(self.config['main']['common_filters'])
+            return usb.parse_filter_rules(filters_str)
 
     def set_server_filters(self, server_name: Optional[str], filters: List[UsbFilterRule]) \
             -> Tuple[bool, str]:
@@ -199,7 +213,35 @@ class ServersManager:
 
             self.__update_servers()
 
-        return list(self.servers.values())
+        # return list(self.servers.values())
+
+        return [
+                UsbipServer("localhost",
+                            "localhost",
+                            True,
+                            [
+                                (usb.UsbipDevice(0, "3-1", "09da", "2696",
+                                                 "A4Tech Co., Ltd. A4tech FHD 1080P PC Camera",
+                                                 [usb.UsbClass.VIDEO]), True),
+                                (usb.UsbipDevice(0, "3-2", "090c", "1000",
+                                                 "Silicon Motion, Inc. - Taiwan (formerly Feiya Technology Corp.) Flash Drive",
+                                                 [usb.UsbClass.MSC]), False),
+                            ],
+                            []),
+                UsbipServer("VM 1",
+                            "192.168.100.33",
+                            True,
+                            [
+                                (usb.UsbipDevice(0, "3-5", "2563", "0575",
+                                                 "ShenZhen ShanWan Technology Co., Ltd. ZD-V+ Wired Gaming Controller",
+                                                 [usb.UsbClass.HID]), False),
+                                (usb.UsbipDevice(0, "3-7", "8087", "0026",
+                                                 "Intel Corp. AX201 Bluetooth",
+                                                 [usb.UsbClass.WIRELESS]), True),
+                            ],
+                            []),
+                UsbipServer("VM 2", "192.168.100.168", False, [], [])
+            ]
 
     def attach_device(self, server_name: str, busid: str) -> Tuple[bool, str]:
         logging.info(f"attach device")
