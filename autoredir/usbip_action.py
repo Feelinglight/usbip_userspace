@@ -137,6 +137,8 @@ class UsbipActionAttach(UsbipAction):
 
     @dataclass
     class _UsbipServerInfo:
+        name: str
+        available: bool
         address: str
         rules: List[usb.UsbFilterRule]
         prev_usbip_list: str
@@ -178,6 +180,7 @@ class UsbipActionAttach(UsbipAction):
 
         if servers_file_changed:
             try:
+                self.config = configparser.ConfigParser()
                 self.config.read(self.servers_file_path)
                 server_names = json.loads(self.config['main']['servers'])
             except (KeyError, configparser.ParsingError, json.JSONDecodeError) as e:
@@ -189,6 +192,8 @@ class UsbipActionAttach(UsbipAction):
                         rules = list(json.loads(self.config[srv]['rules']))
 
                         servers[srv] = self._UsbipServerInfo(
+                            name=srv,
+                            available=True,
                             address=address,
                             rules=usb.parse_filter_rules(rules),
                             prev_usbip_list='',
@@ -204,8 +209,6 @@ class UsbipActionAttach(UsbipAction):
 
     async def usb_list_changed(self) -> bool:
         new_servers = self.read_config()
-        if new_servers == self.servers:
-            return False
 
         old_absent = self.servers.keys() - new_servers.keys()
         _LOGGER.debug(f"Absent servres: {old_absent}")
@@ -222,17 +225,22 @@ class UsbipActionAttach(UsbipAction):
             srv_info.address = new_servers[srv].address
             srv_info.rules = new_servers[srv].rules
 
+        any_server_changed = False
         for srv, srv_info in self.servers.items():
             usbip_cmd = f'{self.USBIP_CMD} list -r {srv_info.address}'
-            _, usb_list_str, _ = await utils.async_check_output(usbip_cmd)
+            ret, usb_list_str, _ = await utils.async_check_output(usbip_cmd, log_errors=False)
+
+            if not ret:
+                srv_info.available = False
 
             if srv_info.prev_usbip_list != usb_list_str:
                 srv_info.prev_usbip_list = usb_list_str
 
                 srv_info.changed = True
+                any_server_changed = True
 
         _LOGGER.debug(f"New servers list:\n{self.servers}")
-        return any(map(lambda s: s.changed, self.servers.values()))
+        return any_server_changed
 
     def find_dev(self, line: str) -> Optional[usb.UsbipDevice]:
         if len(line) < 12:
@@ -295,7 +303,12 @@ class UsbipActionAttach(UsbipAction):
         usbip_res, _, _ = await utils.async_check_output(
             f'{self.USBIP_CMD} {cmd} -b {dev.busid} -r {server}')
 
-        return usbip_res == 0
+        attached = usbip_res == 0
+
+        if attached:
+            _LOGGER.info(f"Device {dev.busid} from {server} attached")
+
+        return attached
 
     async def find_dev_port(self, busid: str) -> Optional[int]:
         res, usbip_output, stderr = await utils.async_check_output(f'{self.USBIP_CMD} port')
