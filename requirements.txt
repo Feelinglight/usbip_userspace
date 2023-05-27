@@ -3,6 +3,8 @@ PyQt5-sip
 PyQt5-stubs
 qt5-tools
 pyinstaller
+fastapi
+uvicorn
 
 # sudo apt update
 # sudo apt full-upgrade

@@ -1,6 +1,8 @@
+import queue
 from typing import List, Type, Dict, Optional, Set
 from dataclasses import dataclass
 from enum import IntEnum, auto
+from queue import Queue
 import configparser
 import logging
 import json
@@ -16,7 +18,7 @@ _LOGGER.addHandler(logging.NullHandler())
 
 class UsbipAction(abc.ABC):
 
-    USBIP_CMD = 'usbip2'
+    USBIP_CMD = 'usbip'
 
     class AutoAction(IntEnum):
         BIND = auto()
@@ -153,11 +155,12 @@ class UsbipActionAttach(UsbipAction):
                 f"changed: {self.changed}\n" \
                 f"usb_devices: {self.usb_devices}\n"
 
-    def __init__(self, servers_file_path):
+    def __init__(self, servers_file_path, commands_queue: queue.Queue):
         self.servers_file_path = servers_file_path
         self.prev_servers_file_mt: float = 0.
         self.config = configparser.ConfigParser()
         self.servers: Dict[str, UsbipActionAttach._UsbipServerInfo] = {}
+        self.commands_queue = commands_queue
 
     def name(self) -> str:
         return "Импорт"
@@ -208,6 +211,12 @@ class UsbipActionAttach(UsbipAction):
         return servers
 
     async def usb_list_changed(self) -> bool:
+        try:
+            data = self.commands_queue.get_nowait()
+            print(data)
+        except queue.Empty:
+            pass
+
         new_servers = self.read_config()
 
         old_absent = self.servers.keys() - new_servers.keys()
