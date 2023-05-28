@@ -5,6 +5,7 @@ qt5-tools
 pyinstaller
 fastapi
 uvicorn
+pydantic
 
 # sudo apt update
 # sudo apt full-upgrade

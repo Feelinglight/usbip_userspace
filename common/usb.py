@@ -1,4 +1,4 @@
-from collections import namedtuple
+from pydantic import BaseModel
 from dataclasses import dataclass
 from enum import IntEnum
 from common import utils
@@ -42,8 +42,7 @@ class UsbClass(IntEnum):
 _CLASS_NAME_TO_ENUM = {usb_class.name: usb_class for usb_class in UsbClass}
 
 
-@dataclass
-class UsbipDevice:
+class UsbipDevice(BaseModel):
     id_: int
     busid: str
     vid: str
@@ -62,8 +61,7 @@ class FilterRuleType(IntEnum):
     VID_PID = 2,
 
 
-@dataclass
-class UsbFilterRule:
+class UsbFilterRule(BaseModel):
     pass_: FilterRulePass
     type_: FilterRuleType
     rule: Union[str, int]
