@@ -294,7 +294,7 @@ class UsbipActionAttach(UsbipAction):
 
         return devs
 
-    async def get_usb_list(self) -> List[usb.UsbipDevice]:
+    def get_usb_list(self) -> List[usb.UsbipDevice]:
         last_usb_id = 0
         for srv, srv_info in self.servers.items():
             if srv_info.changed:
